@@ -1,0 +1,251 @@
+// Prisma schema — Arrendadora API
+// Fuente: docs/architecture/diagrams/2026-07-03-001-DESIGN-026-erd-modelo-datos.md (ADR-003, ADR-004,
+// ADR-005, ADR-006, ADR-008, ADR-012). Monolito modular hexagonal (ADR-001) — este schema es
+// compartido por los 5 bounded contexts; cada uno accede solo a sus propios repositorios
+// (regla de "prohibido acoplamiento por base de datos" del context map, DESIGN-027).
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  // citext (email case-insensitive), pg_trgm (búsqueda por texto libre — spec-003 HU-004)
+  extensions = [citext, pgTrgm(map: "pg_trgm")]
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// TODO: confirmar si el equipo prefiere modelar rol/estado como enum Prisma
+// (elegido acá por tipado fuerte) o como texto libre + CHECK constraint, tal
+// como los documenta el ERD (columnas `text`). Cambiar es una migración simple.
+// ---------------------------------------------------------------------------
+
+enum RolUsuario {
+  administrador
+  agente
+  editor
+}
+
+enum EstadoUsuario {
+  activo
+  desactivado
+  bloqueado
+}
+
+enum TipoOperacion {
+  arriendo
+  venta
+}
+
+enum EstadoPropiedad {
+  disponible
+  reservada
+  arrendada_vendida
+}
+
+// ---------------------------------------------------------------------------
+// 5. Auth y Usuarios (ANALYZE-005)
+// ---------------------------------------------------------------------------
+
+model Usuario {
+  id                      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // TODO: confirmar generador UUIDv7 (ADR-003 pide PK sortable). gen_random_uuid() de pgcrypto
+  // produce UUIDv4. Alternativas: extensión pg_uuidv7, o generación en capa de aplicación.
+  nombre                  String
+  email                   String        @unique @db.Citext
+  passwordHash            String        @map("password_hash")
+  rol                     RolUsuario
+  estado                  EstadoUsuario @default(activo)
+  whatsapp                String?
+  intentosFallidos        Int           @default(0) @map("intentos_fallidos")
+  requiereCambioPassword  Boolean       @default(false) @map("requiere_cambio_password")
+  createdAt               DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  propiedadesComoAgente     Propiedad[]                  @relation("PropiedadAgente")
+  sesiones                  Sesion[]
+  passwordResetTokens       PasswordResetToken[]
+  historialCambios          HistorialEstadoPropiedad[]
+  configuracionesActualizadas ConfiguracionSistema[]
+
+  @@map("usuarios")
+}
+
+model Sesion {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuarioId  String   @map("usuario_id") @db.Uuid
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
+  expiraEn   DateTime @map("expira_en") @db.Timestamptz
+  ip         String?  @db.Inet
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([usuarioId])
+  @@index([expiraEn])
+  @@map("sesiones")
+}
+
+model PasswordResetToken {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuarioId  String   @map("usuario_id") @db.Uuid
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
+  tokenHash  String   @map("token_hash")
+  expiraEn   DateTime @map("expira_en") @db.Timestamptz
+  usado      Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([usuarioId])
+  @@map("password_reset_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Catálogos administrables (ADR-005) — consumidos por 3. Admin Propiedades
+// ---------------------------------------------------------------------------
+
+model TipoPropiedad {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre     String       @unique
+  activo     Boolean      @default(true)
+  orden      Int          @default(0)
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  propiedades Propiedad[]
+
+  @@map("tipos_propiedad")
+}
+
+model Amenidad {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre     String   @unique
+  activo     Boolean  @default(true)
+  orden      Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  propiedadAmenidad PropiedadAmenidad[]
+
+  @@map("amenidades")
+}
+
+// ---------------------------------------------------------------------------
+// 3. Admin — Propiedades (ANALYZE-003) — aggregate raíz `Propiedad` (escritura)
+// Shared kernel de solo lectura para 1. Portal Catálogo y 2. Portal Detalle (ADR-001).
+// ---------------------------------------------------------------------------
+
+model Propiedad {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // TODO: confirmar estrategia de generación de `codigo` (secuencial legible, ej. AP-001 —
+  // GAP-005). Candidatas: secuencia Postgres + trigger de formateo, o generación en la capa de
+  // aplicación dentro de la misma transacción de creación. No se define acá para no anticipar
+  // una migración manual fuera del alcance de este scaffolding.
+  codigo           String          @unique
+  titulo           String
+  slug             String          @unique
+  descripcion      String          @db.Text
+  tipoOperacion    TipoOperacion   @map("tipo_operacion")
+  tipoPropiedadId  String          @map("tipo_propiedad_id") @db.Uuid
+  tipoPropiedad    TipoPropiedad   @relation(fields: [tipoPropiedadId], references: [id])
+  ciudad           String
+  barrio           String?
+  direccion        String?
+  precio           BigInt
+  area             Int
+  habitaciones     Int
+  banos            Int
+  estrato          Int?            @db.SmallInt
+  parqueaderos     Int?
+  estado           EstadoPropiedad @default(disponible)
+  destacada        Boolean         @default(false)
+  archivada        Boolean         @default(false)
+  agenteId         String?         @map("agente_id") @db.Uuid
+  agente           Usuario?        @relation("PropiedadAgente", fields: [agenteId], references: [id])
+  latitud          Decimal?        @db.Decimal(9, 6)
+  longitud         Decimal?        @db.Decimal(9, 6)
+  publicadaEn      DateTime?       @map("publicada_en") @db.Timestamptz
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  fotos                     Foto[]
+  propiedadAmenidad         PropiedadAmenidad[]
+  historialEstado           HistorialEstadoPropiedad[]
+
+  @@index([estado, archivada, publicadaEn(sort: Desc)])
+  @@index([tipoOperacion, tipoPropiedadId, ciudad])
+  @@index([agenteId])
+  // TODO: índice GIN pg_trgm sobre (titulo, codigo, direccion) para búsqueda de texto libre
+  // (spec-003 HU-004) — Prisma no expresa índices GIN/trigram de forma nativa; agregar vía
+  // migración SQL manual (`prisma migrate dev --create-only` + edición del .sql generado).
+  @@map("propiedades")
+}
+
+model PropiedadAmenidad {
+  propiedadId  String     @map("propiedad_id") @db.Uuid
+  amenidadId   String     @map("amenidad_id") @db.Uuid
+  cantidad     Int        @default(1)
+
+  propiedad    Propiedad  @relation(fields: [propiedadId], references: [id])
+  amenidad     Amenidad   @relation(fields: [amenidadId], references: [id])
+
+  @@id([propiedadId, amenidadId])
+  @@map("propiedad_amenidad")
+}
+
+// ---------------------------------------------------------------------------
+// 4. Admin — Multimedia y Geolocalización (ANALYZE-004) — composición de Propiedad
+// ---------------------------------------------------------------------------
+
+model Foto {
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propiedadId      String     @map("propiedad_id") @db.Uuid
+  propiedad        Propiedad  @relation(fields: [propiedadId], references: [id])
+  orden            Int
+  esPortada        Boolean    @default(false) @map("es_portada")
+  s3KeyBase        String     @map("s3_key_base")
+  formatoOriginal  String     @map("formato_original")
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  // TODO: índice UNIQUE parcial (propiedad_id) WHERE es_portada — una sola portada por
+  // propiedad (RN-014). Prisma no soporta índices parciales de forma declarativa; agregar
+  // vía migración SQL manual.
+  @@index([propiedadId])
+  @@map("fotos")
+}
+
+model HistorialEstadoPropiedad {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  propiedadId     String     @map("propiedad_id") @db.Uuid
+  propiedad       Propiedad  @relation(fields: [propiedadId], references: [id])
+  estadoAnterior  String     @map("estado_anterior")
+  estadoNuevo     String     @map("estado_nuevo")
+  usuarioId       String     @map("usuario_id") @db.Uuid
+  usuario         Usuario    @relation(fields: [usuarioId], references: [id])
+  cambiadoEn      DateTime   @default(now()) @map("cambiado_en") @db.Timestamptz
+  nota            String?
+
+  @@index([propiedadId, cambiadoEn(sort: Desc)])
+  @@map("historial_estado_propiedad")
+}
+
+// ---------------------------------------------------------------------------
+// Configuración del sistema (ADR-012, singleton) — upstream de 2. Portal Detalle
+// ---------------------------------------------------------------------------
+
+model ConfiguracionSistema {
+  id                        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  whatsappNumeroCentral     String    @map("whatsapp_numero_central")
+  whatsappPlantillaMensaje  String    @map("whatsapp_plantilla_mensaje")
+  nombreInmobiliaria        String    @map("nombre_inmobiliaria")
+  imagenGenericaUrl         String    @map("imagen_generica_url")
+  actualizadaPor            String?   @map("actualizada_por") @db.Uuid
+  usuario                   Usuario?  @relation(fields: [actualizadaPor], references: [id])
+  updatedAt                 DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // TODO: constraint a nivel de aplicación o CHECK/trigger para garantizar fila única
+  // (singleton) — Prisma no expresa "máximo 1 fila" de forma declarativa.
+  @@map("configuracion_sistema")
+}

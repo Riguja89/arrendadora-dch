@@ -1,0 +1,23 @@
+/**
+ * Estilos globales del portal. Los tokens base (color, tipografía, espaciado) vienen de
+ * `@arrendadora/design-tokens/css`, importado en `app/layout.tsx` antes que este archivo.
+ */
+
+:root {
+  color-scheme: light;
+}
+
+.container {
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
+
+a {
+  color: var(--color-primary);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}

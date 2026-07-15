@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+coverage
+pnpm-lock.yaml
+prisma/migrations
+docs/
+.claude/
+# Artefactos ASDD pre-existentes fuera del scope de este scaffolding (no tocar su formato)
+brief-arrendadora.md
+ASDD-*.md
+CLAUDE.md

@@ -1,0 +1,23 @@
+{
+  "name": "@arrendadora/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Design tokens base (color, tipografía, espaciado, radios) compartidos entre portal y admin — mobile-first, contraste WCAG AA.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./css": "./src/tokens.css"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"@arrendadora/design-tokens: sin tests propios todavía\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

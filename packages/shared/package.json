@@ -1,0 +1,16 @@
+{
+  "name": "@arrendadora/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tipos y DTOs compartidos entre apps (API, portal, admin) — contrato de error y paginación (ADR-015), tipos públicos de Propiedad.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"@arrendadora/shared: sin tests propios todavía\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
