@@ -14,7 +14,8 @@ export type CodigoError =
   | "CONFLICT"
   | "STATE_TRANSITION_INVALID"
   | "UNPROCESSABLE_ENTITY"
-  | "SERVICE_UNAVAILABLE";
+  | "SERVICE_UNAVAILABLE"
+  | "INTERNAL_ERROR";
 
 export interface DetalleErrorCampo {
   campo: string;
@@ -37,4 +38,5 @@ export const HTTP_A_CODIGO_ERROR: Record<number, CodigoError> = {
   409: "CONFLICT",
   422: "UNPROCESSABLE_ENTITY",
   503: "SERVICE_UNAVAILABLE",
+  500: "INTERNAL_ERROR",
 };
