@@ -72,6 +72,10 @@ import { RolesGuard } from "./infrastructure/http/guards/roles.guard";
     SessionAuthGuard,
     RolesGuard,
   ],
-  exports: [],
+  // Exporta los guards y su dependencia (ValidarSesionUseCase) para que otros bounded contexts
+  // downstream — admin-propiedades, admin-multimedia — reutilicen la identidad/RBAC sin re-proveer
+  // la cadena de autenticación (Customer/Supplier, DESIGN-027). ValidarSesionUseCase se exporta
+  // porque Nest reconstruye el guard en el injector del módulo consumidor y necesita resolverlo ahí.
+  exports: [SessionAuthGuard, RolesGuard, ValidarSesionUseCase],
 })
 export class AuthUsuariosModule {}
