@@ -9,6 +9,7 @@ import { PortalDetalleModule } from "./modules/portal-detalle/portal-detalle.mod
 import { AdminPropiedadesModule } from "./modules/admin-propiedades/admin-propiedades.module";
 import { AdminMultimediaModule } from "./modules/admin-multimedia/admin-multimedia.module";
 import { AuthUsuariosModule } from "./modules/auth-usuarios/auth-usuarios.module";
+import { ConfiguracionModule } from "./modules/configuracion/configuracion.module";
 
 @Module({
   imports: [
@@ -20,6 +21,8 @@ import { AuthUsuariosModule } from "./modules/auth-usuarios/auth-usuarios.module
     AdminPropiedadesModule,
     AdminMultimediaModule,
     AuthUsuariosModule,
+    // Contexto de soporte: configuración del sistema (singleton, ADR-016).
+    ConfiguracionModule,
   ],
   controllers: [AppController],
   providers: [],
