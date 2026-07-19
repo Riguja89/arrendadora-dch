@@ -84,7 +84,9 @@ export class PropiedadesController {
       tamanoPagina: query.tamano_pagina,
     });
     return {
-      data: items.map(aPropiedadWire),
+      // Envuelto en arrow: `Array.map` pasa el índice como 2º argumento y `aPropiedadWire`
+      // interpretaría ese número como `fotos`. El listado no puebla `fotos[]` (evita N+1).
+      data: items.map((propiedad) => aPropiedadWire(propiedad)),
       meta: aPaginacionWire(total, query.pagina, query.tamano_pagina),
     };
   }
@@ -120,8 +122,8 @@ export class PropiedadesController {
   @Get(":id")
   @Roles("administrador", "agente", "editor")
   async obtener(@Param("id") id: string, @UsuarioActual() usuario: Usuario): Promise<PropiedadWire> {
-    const propiedad = await this.obtenerPropiedadUseCase.ejecutar({ actor: aActor(usuario), id });
-    return aPropiedadWire(propiedad);
+    const { propiedad, fotos } = await this.obtenerPropiedadUseCase.ejecutar({ actor: aActor(usuario), id });
+    return aPropiedadWire(propiedad, fotos);
   }
 
   /** CU-002 — editar datos (no cambia el estado). Agente solo las propias (RN-010). */

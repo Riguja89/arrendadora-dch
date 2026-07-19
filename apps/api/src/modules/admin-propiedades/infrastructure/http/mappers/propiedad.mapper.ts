@@ -2,6 +2,7 @@ import { construirMetaPaginacion, type MetaPaginacion } from "@arrendadora/share
 import type { Propiedad } from "../../../domain/entities/propiedad.entity";
 import type { CatalogoItem } from "../../../domain/entities/catalogo-item.entity";
 import type { HistorialEstadoLectura } from "../../../domain/ports/historial-estado.repository.port";
+import type { FotoPublica } from "../../../../admin-multimedia/domain/ports/multimedia-query.port";
 
 /**
  * Shapes del wire (snake_case) del contrato admin (DESIGN-028, ADR-015). Se declaran locales al
@@ -12,9 +13,36 @@ import type { HistorialEstadoLectura } from "../../../domain/ports/historial-est
  * - `amenidades[]` expone `{ amenidad_id, cantidad }` SIN `nombre`: el aggregate solo referencia
  *   ids; el nombre lo resuelve el frontend desde el catálogo `/admin/amenidades` que ya carga
  *   (evita un join N+1 en la lectura del aggregate).
- * - `fotos[]` se omite: la multimedia es un bounded context aparte (admin-multimedia, spec-004),
- *   aún no implementado. Se incorporará cuando ese contexto exista.
+ * - `fotos[]` se puebla en la ficha (`GET /admin/propiedades/{id}`) consumiendo el
+ *   `MultimediaQueryPort` (token `MULTIMEDIA_QUERY`) que exporta `admin-multimedia`, in-process
+ *   (DESIGN-027). El caso de uso `obtener-propiedad` resuelve las fotos y las entrega ya listas al
+ *   mapper (que se mantiene puro). En los endpoints que NO son la ficha (listado, crear, editar,
+ *   duplicar, archivar, restaurar, estado) `fotos` se omite: son opcionales en el contrato y
+ *   resolverlas ahí solo agregaría un N+1 que el frontend de la ficha no consume desde esas
+ *   respuestas.
  */
+
+/**
+ * Item de `fotos[]` del schema `Propiedad` (DESIGN-028, mismo shape que el schema `Foto`). Se mapea
+ * LOCALMENTE desde `FotoPublica` (la proyección camelCase del query port) en vez de reusar el
+ * `aFotoWire` de `admin-multimedia`: ese helper mapea el aggregate `Foto` + `AlmacenamientoObjetosPort`
+ * (otra firma) y su `FotoWire` vive en la capa de infraestructura de otro BC. Declararlo local honra
+ * el mismo criterio que `PropiedadWire`/`PaginacionMetaWire` (wire propio del módulo, sin acoplarse a
+ * la infraestructura de `admin-multimedia`). El `propiedad_id` del contrato se inyecta desde la
+ * propiedad en contexto — `FotoPublica` no lo transporta (es siempre la propiedad consultada).
+ */
+export interface PropiedadFotoWire {
+  id: string;
+  propiedad_id: string;
+  orden: number;
+  es_portada: boolean;
+  formato_original: string;
+  url_optimizada: string;
+  url_card: string;
+  url_thumbnail: string;
+  created_at: string;
+}
+
 export interface PropiedadAmenidadWire {
   amenidad_id: string;
   cantidad: number;
@@ -44,6 +72,7 @@ export interface PropiedadWire {
   latitud: number | null;
   longitud: number | null;
   amenidades: PropiedadAmenidadWire[];
+  fotos?: PropiedadFotoWire[];
   publicada_en: string | null;
   created_at: string;
   updated_at: string;
@@ -73,10 +102,30 @@ export interface PaginacionMetaWire {
   total_paginas: number;
 }
 
-/** Mapea el aggregate al shape exacto del contrato `Propiedad` (DESIGN-028). */
-export function aPropiedadWire(propiedad: Propiedad): PropiedadWire {
-  const p = propiedad.toProps();
+/** Mapea una `FotoPublica` (query port de `admin-multimedia`) al item snake_case de `fotos[]`. */
+export function aPropiedadFotoWire(foto: FotoPublica, propiedadId: string): PropiedadFotoWire {
   return {
+    id: foto.id,
+    propiedad_id: propiedadId,
+    orden: foto.orden,
+    es_portada: foto.esPortada,
+    formato_original: foto.formatoOriginal,
+    url_optimizada: foto.urlOptimizada,
+    url_card: foto.urlCard,
+    url_thumbnail: foto.urlThumbnail,
+    created_at: foto.createdAt.toISOString(),
+  };
+}
+
+/**
+ * Mapea el aggregate al shape exacto del contrato `Propiedad` (DESIGN-028). Cuando el llamador
+ * resuelve las fotos (ficha), las pasa ya listas (`FotoPublica[]`, ordenadas con la portada primero
+ * por el query port) y el mapper solo las proyecta a snake_case. Sin `fotos` → el campo se omite
+ * (opcional en el contrato) para no afirmar `[]` en endpoints que no las consultan.
+ */
+export function aPropiedadWire(propiedad: Propiedad, fotos?: FotoPublica[]): PropiedadWire {
+  const p = propiedad.toProps();
+  const wire: PropiedadWire = {
     id: p.id,
     codigo: p.codigo,
     titulo: p.titulo,
@@ -104,6 +153,10 @@ export function aPropiedadWire(propiedad: Propiedad): PropiedadWire {
     created_at: p.createdAt.toISOString(),
     updated_at: p.updatedAt.toISOString(),
   };
+  if (fotos !== undefined) {
+    wire.fotos = fotos.map((foto) => aPropiedadFotoWire(foto, p.id));
+  }
+  return wire;
 }
 
 /** Mapea una entrada de historial al contrato `HistorialEstado` (DESIGN-028). */

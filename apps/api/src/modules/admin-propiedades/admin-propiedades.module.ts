@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { AuthUsuariosModule } from "../auth-usuarios/auth-usuarios.module";
+import { AdminMultimediaModule } from "../admin-multimedia/admin-multimedia.module";
 
 import { PROPIEDAD_REPOSITORY } from "./domain/ports/propiedad.repository.port";
 import {
@@ -60,7 +61,10 @@ import {
  * aquí — su bounded context es ambiguo (ver CLAUDE.md del módulo, ESCALAMIENTO a solution-architect).
  */
 @Module({
-  imports: [AuthUsuariosModule],
+  // `AdminMultimediaModule` exporta `MULTIMEDIA_QUERY` (lectura in-process, DESIGN-027) para que
+  // `obtener-propiedad` cierre el `fotos[]` del contrato. Sin ciclo de módulos: admin-multimedia
+  // solo importa `AuthUsuariosModule` (lee la tabla `propiedades` vía Prisma, no importa este BC).
+  imports: [AuthUsuariosModule, AdminMultimediaModule],
   controllers: [PropiedadesController, TiposPropiedadController, AmenidadesController],
   providers: [
     // Puertos → adaptadores de infraestructura
