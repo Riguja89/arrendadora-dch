@@ -3,7 +3,7 @@
  *
  * `error` es un código técnico estable en SCREAMING_SNAKE_CASE (inglés).
  * `message` es el texto legible en español para el usuario/operador.
- * `correlationId` se propaga desde `X-Correlation-ID` o se genera en el boundary de entrada.
+ * `correlation_id` (snake_case sobre el wire) se propaga desde `X-Correlation-ID` o se genera en el boundary de entrada.
  */
 
 export type CodigoError =
@@ -25,7 +25,7 @@ export interface DetalleErrorCampo {
 export interface RespuestaError {
   error: CodigoError;
   message: string;
-  correlationId: string;
+  correlation_id: string;
   detalles?: DetalleErrorCampo[];
 }
 

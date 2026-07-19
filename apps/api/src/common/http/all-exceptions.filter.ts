@@ -7,18 +7,10 @@ import {
 } from "@nestjs/common";
 import type { Response } from "express";
 import { randomUUID } from "node:crypto";
-import type { CodigoError, DetalleErrorCampo } from "@arrendadora/shared";
+import type { CodigoError, RespuestaError } from "@arrendadora/shared";
 import { DominioError } from "../errors/dominio-error.base";
 import { ValidationHttpException } from "../errors/validation-http.exception";
 import type { RequestConCorrelationId } from "./correlation-id.middleware";
-
-/** Envelope de error API-wide (ADR-015). `correlation_id` es snake_case sobre el wire. */
-interface RespuestaErrorWire {
-  error: CodigoError;
-  message: string;
-  correlation_id: string;
-  detalles?: DetalleErrorCampo[];
-}
 
 const HTTP_STATUS_A_CODIGO: Record<number, CodigoError> = {
   400: "VALIDATION_ERROR",
@@ -56,7 +48,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   private resolver(
     exception: unknown,
     correlationId: string,
-  ): { status: number; body: RespuestaErrorWire } {
+  ): { status: number; body: RespuestaError } {
     if (exception instanceof DominioError) {
       return {
         status: exception.httpStatus,
