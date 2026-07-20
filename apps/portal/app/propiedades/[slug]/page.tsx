@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { obtenerPropiedadMockPorSlug } from "@/mocks/propiedades";
 
 interface PaginaPropiedadProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 /**
@@ -12,7 +12,8 @@ interface PaginaPropiedadProps {
  * (CU-001, spec-002, pendiente de Construir).
  */
 export async function generateMetadata({ params }: PaginaPropiedadProps): Promise<Metadata> {
-  const propiedad = obtenerPropiedadMockPorSlug(params.slug);
+  const { slug } = await params;
+  const propiedad = obtenerPropiedadMockPorSlug(slug);
 
   if (!propiedad) {
     return { title: "Propiedad no encontrada" };
@@ -31,8 +32,9 @@ export async function generateMetadata({ params }: PaginaPropiedadProps): Promis
   };
 }
 
-export default function PaginaPropiedad({ params }: PaginaPropiedadProps) {
-  const propiedad = obtenerPropiedadMockPorSlug(params.slug);
+export default async function PaginaPropiedad({ params }: PaginaPropiedadProps) {
+  const { slug } = await params;
+  const propiedad = obtenerPropiedadMockPorSlug(slug);
 
   if (!propiedad) {
     return (
