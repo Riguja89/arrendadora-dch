@@ -35,6 +35,8 @@ export class AppModule implements NestModule {
    * el boundary de entrada.
    */
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(CorrelationIdMiddleware).forRoutes("*");
+    // Express 5 / path-to-regexp v8 (NestJS 11): el wildcard sin nombre `"*"` ya no es válido.
+    // `"{*path}"` es el comodín con nombre que cubre todas las rutas, incluida la raíz.
+    consumer.apply(CorrelationIdMiddleware).forRoutes("{*path}");
   }
 }
