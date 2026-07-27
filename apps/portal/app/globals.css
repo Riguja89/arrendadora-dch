@@ -228,3 +228,247 @@ a:hover {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }
+
+/* ---- Ficha de detalle (CU-002, spec-portal-detalle) ---- */
+
+.ficha-propiedad {
+  padding-block: var(--space-6) var(--space-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.ficha-propiedad__banner-reservada {
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-warning);
+  color: var(--color-primary-contrast);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+}
+
+.ficha-propiedad__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.ficha-propiedad__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ficha-propiedad__etiqueta-operacion {
+  align-self: flex-start;
+  padding: var(--space-1) var(--space-3);
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.ficha-propiedad__header h1 {
+  font-size: var(--font-size-3xl);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+.ficha-propiedad__ubicacion {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.ficha-propiedad__precio {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: var(--space-2) 0 0;
+}
+
+.ficha-propiedad__caracteristicas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-4);
+  margin: 0;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.ficha-propiedad__caracteristicas dt {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.ficha-propiedad__caracteristicas dd {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.ficha-propiedad__descripcion {
+  white-space: pre-line;
+  line-height: var(--line-height-base);
+}
+
+.ficha-propiedad__amenidades {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ficha-propiedad__amenidades li {
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-sm);
+}
+
+.ficha-propiedad__contacto {
+  padding: var(--space-6);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+/* ---- Galería ---- */
+
+.galeria-propiedad {
+  outline: none;
+}
+
+.galeria-propiedad__visor {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.galeria-propiedad__imagen {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.galeria-propiedad--sin-fotos .galeria-propiedad__imagen {
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background-color: var(--color-surface);
+}
+
+.galeria-propiedad__control {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: var(--radius-full);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-size: var(--font-size-xl);
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+}
+
+.galeria-propiedad__control--anterior {
+  left: var(--space-3);
+}
+
+.galeria-propiedad__control--siguiente {
+  right: var(--space-3);
+}
+
+.galeria-propiedad__contador {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.galeria-propiedad__indicadores {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.galeria-propiedad__indicador {
+  width: 0.5rem;
+  height: 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background-color: var(--color-border);
+  cursor: pointer;
+}
+
+.galeria-propiedad__indicador--activo {
+  background-color: var(--color-primary);
+}
+
+/* ---- Mapa aproximado ---- */
+
+.mapa-ubicacion__iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: var(--radius-md);
+}
+
+.mapa-ubicacion--degradado {
+  padding: var(--space-6);
+  background-color: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.mapa-ubicacion__texto {
+  font-weight: 600;
+  margin: 0 0 var(--space-1);
+}
+
+.mapa-ubicacion__nota {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: var(--space-2) 0 0;
+}
+
+/* ---- Contacto WhatsApp ---- */
+
+.contacto-whatsapp__boton {
+  padding: var(--space-3) var(--space-8);
+  background-color: var(--color-success);
+  color: var(--color-primary-contrast);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.contacto-whatsapp__boton:disabled {
+  background-color: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.contacto-whatsapp__mensaje {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.contacto-whatsapp__mensaje--error {
+  color: var(--color-error);
+}

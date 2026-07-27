@@ -57,6 +57,27 @@ async function leerError(response: Response): Promise<RespuestaError> {
   };
 }
 
+/** Normaliza una `Response` de fetch al envelope `RespuestaApi<T>` (ADR-015). No lanza. */
+async function normalizarRespuesta<T>(response: Response): Promise<RespuestaApi<T>> {
+  if (!response.ok) {
+    return { ok: false, error: await leerError(response) };
+  }
+  const data = (await response.json()) as T;
+  return { ok: true, data };
+}
+
+/** Envelope de error sintetizado ante un fallo de red (fetch rechazado). */
+function errorServicioNoDisponible(): RespuestaApi<never> {
+  return {
+    ok: false,
+    error: {
+      error: "SERVICE_UNAVAILABLE",
+      message: "No pudimos conectar con el servicio de propiedades. Intentá de nuevo en unos minutos.",
+      correlation_id: generarCorrelationId(),
+    },
+  };
+}
+
 /**
  * Petición GET tipada contra la API pública. Nunca lanza: los errores de red, HTTP y de
  * parseo se normalizan al envelope `RespuestaError` (ADR-015) dentro de `{ ok: false, error }`.
@@ -72,21 +93,32 @@ export async function peticionApi<T>(
       cache: opciones.cache ?? "no-store",
       headers: { Accept: "application/json" },
     });
-
-    if (!response.ok) {
-      return { ok: false, error: await leerError(response) };
-    }
-
-    const data = (await response.json()) as T;
-    return { ok: true, data };
+    return await normalizarRespuesta<T>(response);
   } catch {
-    return {
-      ok: false,
-      error: {
-        error: "SERVICE_UNAVAILABLE",
-        message: "No pudimos conectar con el servicio de propiedades. Intentá de nuevo en unos minutos.",
-        correlation_id: generarCorrelationId(),
-      },
-    };
+    return errorServicioNoDisponible();
+  }
+}
+
+/**
+ * Petición POST tipada contra la API pública (ej. `contacto-whatsapp`, DESIGN-029). Mismo
+ * contrato de errores que `peticionApi`: nunca lanza, siempre normaliza a `RespuestaApi<T>`.
+ * No cachea (las acciones de escritura no son cacheables).
+ */
+export async function peticionApiPost<T>(
+  path: string,
+  body: unknown,
+  opciones: OpcionesPeticion = {},
+): Promise<RespuestaApi<T>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "POST",
+      signal: opciones.signal,
+      cache: "no-store",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return await normalizarRespuesta<T>(response);
+  } catch {
+    return errorServicioNoDisponible();
   }
 }
