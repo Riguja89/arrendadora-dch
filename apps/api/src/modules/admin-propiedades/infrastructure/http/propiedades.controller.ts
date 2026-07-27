@@ -20,18 +20,22 @@ import { DuplicarPropiedadUseCase } from "../../application/use-cases/duplicar-p
 import { ArchivarPropiedadUseCase } from "../../application/use-cases/archivar-propiedad.use-case";
 import { RestaurarPropiedadUseCase } from "../../application/use-cases/restaurar-propiedad.use-case";
 import { ListarHistorialUseCase } from "../../application/use-cases/listar-historial.use-case";
+import { EstablecerUbicacionPropiedadUseCase } from "../../application/use-cases/establecer-ubicacion-propiedad.use-case";
 import type { Actor } from "../../domain/types/rol-actor";
 import { CrearPropiedadDto } from "./dto/crear-propiedad.dto";
 import { EditarPropiedadDto } from "./dto/editar-propiedad.dto";
 import { ListarPropiedadesQueryDto } from "./dto/listar-propiedades-query.dto";
 import { CambiarEstadoPropiedadDto } from "./dto/cambiar-estado-propiedad.dto";
+import { EstablecerUbicacionDto } from "./dto/establecer-ubicacion.dto";
 import {
   aHistorialWire,
   aPaginacionWire,
   aPropiedadWire,
+  aUbicacionWire,
   type HistorialEstadoWire,
   type PaginacionMetaWire,
   type PropiedadWire,
+  type UbicacionWire,
 } from "./mappers/propiedad.mapper";
 import { SessionAuthGuard } from "../../../auth-usuarios/infrastructure/http/guards/session-auth.guard";
 import { RolesGuard } from "../../../auth-usuarios/infrastructure/http/guards/roles.guard";
@@ -63,6 +67,7 @@ export class PropiedadesController {
     private readonly archivarPropiedadUseCase: ArchivarPropiedadUseCase,
     private readonly restaurarPropiedadUseCase: RestaurarPropiedadUseCase,
     private readonly listarHistorialUseCase: ListarHistorialUseCase,
+    private readonly establecerUbicacionPropiedadUseCase: EstablecerUbicacionPropiedadUseCase,
   ) {}
 
   /** CU-005 (HU-004) — listado interno paginado con filtros y búsqueda. Cualquier rol autenticado. */
@@ -168,6 +173,7 @@ export class PropiedadesController {
 
   /** RN-027 — archivar (borrado lógico). Restringido a Administrador/Editor (ADR-014). */
   @Post(":id/archivar")
+  @HttpCode(HttpStatus.OK)
   @Roles("administrador", "editor")
   async archivar(@Param("id") id: string, @UsuarioActual() usuario: Usuario): Promise<PropiedadWire> {
     const propiedad = await this.archivarPropiedadUseCase.ejecutar({ actor: aActor(usuario), id });
@@ -176,6 +182,7 @@ export class PropiedadesController {
 
   /** RN-027 — restaurar una propiedad archivada. Acción excepcional reservada al Administrador. */
   @Post(":id/restaurar")
+  @HttpCode(HttpStatus.OK)
   @Roles("administrador")
   async restaurar(@Param("id") id: string, @UsuarioActual() usuario: Usuario): Promise<PropiedadWire> {
     const propiedad = await this.restaurarPropiedadUseCase.ejecutar({ actor: aActor(usuario), id });
@@ -208,5 +215,28 @@ export class PropiedadesController {
   ): Promise<HistorialEstadoWire[]> {
     const entradas = await this.listarHistorialUseCase.ejecutar({ actor: aActor(usuario), id });
     return entradas.map(aHistorialWire);
+  }
+
+  /**
+   * RN-033 (ADR-011) — fija la ubicación: manual (`latitud`+`longitud`) o geocodificando
+   * `direccion` (`geocodificar_direccion: true`), nunca ambos ni ninguno (422). Restringido a
+   * Administrador/Editor (contrato DESIGN-028) — a diferencia del resto de los endpoints de este
+   * controller, el Agente NO tiene acceso aquí ni siquiera sobre sus propias propiedades.
+   */
+  @Put(":id/ubicacion")
+  @Roles("administrador", "editor")
+  async establecerUbicacion(
+    @Param("id") id: string,
+    @Body() dto: EstablecerUbicacionDto,
+    @UsuarioActual() usuario: Usuario,
+  ): Promise<UbicacionWire> {
+    const propiedad = await this.establecerUbicacionPropiedadUseCase.ejecutar({
+      actor: aActor(usuario),
+      id,
+      latitud: dto.latitud,
+      longitud: dto.longitud,
+      geocodificarDireccion: dto.geocodificar_direccion,
+    });
+    return aUbicacionWire(propiedad);
   }
 }

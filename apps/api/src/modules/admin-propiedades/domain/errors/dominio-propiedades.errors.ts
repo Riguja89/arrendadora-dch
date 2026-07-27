@@ -105,3 +105,43 @@ export class NombreCatalogoDuplicadoError extends DominioError {
     super(mensaje);
   }
 }
+
+/**
+ * PUT /admin/propiedades/{id}/ubicacion — RN-033: la ubicación se fija con EXACTAMENTE un modo
+ * (coordenadas manuales completas, o `geocodificar_direccion: true`), nunca ambos ni ninguno.
+ */
+export class UbicacionModoInvalidoError extends DominioError {
+  readonly httpStatus = 422;
+  readonly codigo = "UNPROCESSABLE_ENTITY" as const;
+  constructor() {
+    const mensaje =
+      "Enviá latitud y longitud para fijar la ubicación manualmente, o geocodificar_direccion: true " +
+      "para geocodificarla a partir de la dirección — no se pueden combinar ni omitir ambos.";
+    super(mensaje, [{ campo: "geocodificar_direccion", mensaje }]);
+  }
+}
+
+/** PUT /admin/propiedades/{id}/ubicacion — latitud o longitud fuera del rango geográfico válido. */
+export class CoordenadasInvalidasError extends DominioError {
+  readonly httpStatus = 422;
+  readonly codigo = "UNPROCESSABLE_ENTITY" as const;
+  constructor(campo: "latitud" | "longitud") {
+    const rango = campo === "latitud" ? "-90 y 90" : "-180 y 180";
+    const mensaje = `El campo ${campo} debe estar entre ${rango}.`;
+    super(mensaje, [{ campo, mensaje }]);
+  }
+}
+
+/**
+ * PUT /admin/propiedades/{id}/ubicacion (modo geocodificar) — RN-033 excepción: la propiedad no
+ * tiene `direccion` para geocodificar, o el proveedor no pudo resolverla. El panel debe sugerir
+ * fijar el pin manualmente.
+ */
+export class DireccionNoGeocodificableError extends DominioError {
+  readonly httpStatus = 422;
+  readonly codigo = "UNPROCESSABLE_ENTITY" as const;
+  constructor() {
+    const mensaje = "No encontramos esa dirección. Podés ubicar el pin manualmente en el mapa.";
+    super(mensaje, [{ campo: "geocodificar_direccion", mensaje }]);
+  }
+}

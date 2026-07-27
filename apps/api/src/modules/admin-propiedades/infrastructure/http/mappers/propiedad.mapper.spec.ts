@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { aPropiedadFotoWire, aPropiedadWire } from "./propiedad.mapper";
+import { aPropiedadFotoWire, aPropiedadWire, aUbicacionWire } from "./propiedad.mapper";
 import { Propiedad } from "../../../domain/entities/propiedad.entity";
+import { Coordenadas } from "../../../domain/value-objects/coordenadas.vo";
 import type { FotoPublica } from "../../../../admin-multimedia/domain/ports/multimedia-query.port";
 
 const AHORA = new Date("2026-07-01T10:00:00.000Z");
@@ -57,5 +58,17 @@ describe("aPropiedadWire — fotos[]", () => {
   it("emite `fotos: []` cuando la ficha resuelve y la propiedad no tiene fotos", () => {
     const wire = aPropiedadWire(propiedad(), []);
     expect(wire.fotos).toEqual([]);
+  });
+});
+
+describe("aUbicacionWire (RN-033)", () => {
+  it("mapea latitud/longitud null cuando la propiedad no tiene ubicación fijada", () => {
+    expect(aUbicacionWire(propiedad())).toEqual({ latitud: null, longitud: null });
+  });
+
+  it("mapea latitud/longitud una vez fijada la ubicación", () => {
+    const p = propiedad();
+    p.establecerUbicacion(Coordenadas.crear(4.710989, -74.072092), AHORA);
+    expect(aUbicacionWire(p)).toEqual({ latitud: 4.710989, longitud: -74.072092 });
   });
 });

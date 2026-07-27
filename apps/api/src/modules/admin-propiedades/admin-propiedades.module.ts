@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { AuthUsuariosModule } from "../auth-usuarios/auth-usuarios.module";
 import { AdminMultimediaModule } from "../admin-multimedia/admin-multimedia.module";
+import type { GeocodingConfig } from "../../config/configuration";
 
 import { PROPIEDAD_REPOSITORY } from "./domain/ports/propiedad.repository.port";
 import {
@@ -12,6 +14,7 @@ import { HISTORIAL_ESTADO_REPOSITORY } from "./domain/ports/historial-estado.rep
 import { GENERADOR_CODIGO } from "./domain/ports/generador-codigo.port";
 import { ID_GENERATOR, type IdGeneratorPort } from "./domain/ports/id-generator.port";
 import { RELOJ, type RelojPort } from "./domain/ports/reloj.port";
+import { GEOCODING } from "./domain/ports/geocoding.port";
 import { ETIQUETAS_AMENIDAD, ETIQUETAS_TIPO_PROPIEDAD } from "./domain/types/catalogo-etiquetas";
 
 import { PropiedadPrismaRepository } from "./infrastructure/persistence/propiedad-prisma.repository";
@@ -21,6 +24,8 @@ import { HistorialEstadoPrismaRepository } from "./infrastructure/persistence/hi
 import { CodigoSecuencialPrismaAdapter } from "./infrastructure/support/codigo-secuencial-prisma.adapter";
 import { CryptoIdGeneratorAdapter } from "./infrastructure/support/crypto-id-generator.adapter";
 import { RelojSistemaAdapter } from "./infrastructure/support/reloj-sistema.adapter";
+import { GoogleGeocodingAdapter } from "./infrastructure/geocoding/google-geocoding.adapter";
+import { StubGeocodingAdapter } from "./infrastructure/geocoding/stub-geocoding.adapter";
 
 import { CrearPropiedadUseCase } from "./application/use-cases/crear-propiedad.use-case";
 import { EditarPropiedadUseCase } from "./application/use-cases/editar-propiedad.use-case";
@@ -31,6 +36,7 @@ import { DuplicarPropiedadUseCase } from "./application/use-cases/duplicar-propi
 import { ArchivarPropiedadUseCase } from "./application/use-cases/archivar-propiedad.use-case";
 import { RestaurarPropiedadUseCase } from "./application/use-cases/restaurar-propiedad.use-case";
 import { ListarHistorialUseCase } from "./application/use-cases/listar-historial.use-case";
+import { EstablecerUbicacionPropiedadUseCase } from "./application/use-cases/establecer-ubicacion-propiedad.use-case";
 import { CrearCatalogoUseCase } from "./application/use-cases/crear-catalogo.use-case";
 import { EditarCatalogoUseCase } from "./application/use-cases/editar-catalogo.use-case";
 import { ListarCatalogoUseCase } from "./application/use-cases/listar-catalogo.use-case";
@@ -76,6 +82,19 @@ import {
     { provide: ID_GENERATOR, useClass: CryptoIdGeneratorAdapter },
     { provide: RELOJ, useClass: RelojSistemaAdapter },
 
+    // Puerto de geocoding → adaptador seleccionado por config (Google en prod, stub en dev/tests).
+    // Mismo patrón que el anti-bot de `portal-detalle` (env GEOCODING_DRIVER, ADR-011).
+    {
+      provide: GEOCODING,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const geocoding = config.get<GeocodingConfig>("geocoding");
+        return geocoding?.driver === "google" && geocoding.apiKey
+          ? new GoogleGeocodingAdapter(config)
+          : new StubGeocodingAdapter();
+      },
+    },
+
     // Casos de uso de propiedad (aplicación) — inyectables estándar
     CrearPropiedadUseCase,
     EditarPropiedadUseCase,
@@ -86,6 +105,7 @@ import {
     ArchivarPropiedadUseCase,
     RestaurarPropiedadUseCase,
     ListarHistorialUseCase,
+    EstablecerUbicacionPropiedadUseCase,
 
     // Casos de uso genéricos de catálogo — una instancia por catálogo vía factory provider (ADR-005).
     // Cada instancia queda ligada a su repositorio y a sus etiquetas de mensajes en español.

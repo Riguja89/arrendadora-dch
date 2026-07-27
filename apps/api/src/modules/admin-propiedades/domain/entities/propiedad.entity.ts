@@ -4,6 +4,7 @@ import type { RolActor } from "../types/rol-actor";
 import { Precio } from "../value-objects/precio.vo";
 import { Area } from "../value-objects/area.vo";
 import { Slug } from "../value-objects/slug.vo";
+import type { Coordenadas } from "../value-objects/coordenadas.vo";
 import { esTransicionValida, requiereAdministrador } from "../rules/transiciones-estado";
 import {
   ReaperturaSoloAdministradorError,
@@ -199,6 +200,17 @@ export class Propiedad {
   }
 
   /**
+   * RN-033 — fija la ubicación de la propiedad. Recibe `Coordenadas` ya validadas (rango
+   * geográfico, VO) — resueltas manualmente o por geocodificación de `direccion` (el modo y la
+   * llamada al `GeocodingPort` los orquesta el caso de uso, nunca el aggregate).
+   */
+  establecerUbicacion(coordenadas: Coordenadas, ahora: Date): void {
+    this.props.latitud = coordenadas.latitud;
+    this.props.longitud = coordenadas.longitud;
+    this.tocar(ahora);
+  }
+
+  /**
    * HU-003 (RN-026) — crea una copia como plantilla: mismos datos de texto, precio, tipo y
    * características (amenidades), pero SIN fotos, en estado `disponible` y con nuevo `codigo`/`slug`,
    * independientemente del estado del original. El `agenteId` de la copia lo decide el use-case.
@@ -251,6 +263,15 @@ export class Propiedad {
   }
   get titulo(): string {
     return this.props.titulo;
+  }
+  get direccion(): string | null {
+    return this.props.direccion;
+  }
+  get latitud(): number | null {
+    return this.props.latitud;
+  }
+  get longitud(): number | null {
+    return this.props.longitud;
   }
 
   toProps(): Readonly<PropiedadProps> {

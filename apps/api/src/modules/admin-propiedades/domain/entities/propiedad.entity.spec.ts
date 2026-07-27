@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Propiedad, type CrearPropiedadInput } from "./propiedad.entity";
+import { Coordenadas } from "../value-objects/coordenadas.vo";
 import {
   PrecioInvalidoError,
   ReaperturaSoloAdministradorError,
@@ -188,6 +189,27 @@ describe("Propiedad (aggregate)", () => {
       p.archivar(DESPUES);
       p.restaurar(DESPUES);
       expect(p.archivada).toBe(false);
+    });
+  });
+
+  describe("establecerUbicacion (RN-033)", () => {
+    it("arranca sin coordenadas (null, null)", () => {
+      const p = Propiedad.crear(baseInput());
+      expect(p.latitud).toBeNull();
+      expect(p.longitud).toBeNull();
+    });
+
+    it("fija latitud/longitud y toca updatedAt", () => {
+      const p = Propiedad.crear(baseInput());
+      p.establecerUbicacion(Coordenadas.crear(4.710989, -74.072092), DESPUES);
+      expect(p.latitud).toBe(4.710989);
+      expect(p.longitud).toBe(-74.072092);
+      expect(p.toProps().updatedAt).toEqual(DESPUES);
+    });
+
+    it("expone la direccion vía getter (usada por el caso de uso para geocodificar)", () => {
+      const p = Propiedad.crear(baseInput({ direccion: "Calle 63 #10-20" }));
+      expect(p.direccion).toBe("Calle 63 #10-20");
     });
   });
 

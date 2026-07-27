@@ -14,10 +14,11 @@ import {
 
 /**
  * Valida el cableado DI del bounded context admin-propiedades sin base de datos real: compila el
- * grafo completo (puertos→adaptadores, casos de uso inyectables y las 8 factory providers de
- * catálogo) y confirma que los 3 controllers resuelven — incluido el patrón de herencia de
- * `CatalogoBaseController` con inyección por token (Symbol). `PrismaService` se sustituye por un
- * stub: los repositorios se construyen pero no se ejecuta ninguna query en este test.
+ * grafo completo (puertos→adaptadores, casos de uso inyectables, el factory provider de geocoding
+ * — ADR-011, driver stub por config default — y las 8 factory providers de catálogo) y confirma
+ * que los 3 controllers resuelven — incluido el patrón de herencia de `CatalogoBaseController` con
+ * inyección por token (Symbol). `PrismaService` se sustituye por un stub: los repositorios se
+ * construyen pero no se ejecuta ninguna query en este test.
  */
 describe("AdminPropiedadesModule (wiring DI)", () => {
   async function bootstrap(): Promise<TestingModule> {
@@ -33,7 +34,7 @@ describe("AdminPropiedadesModule (wiring DI)", () => {
       .compile();
   }
 
-  it("resuelve PropiedadesController con sus 9 casos de uso", async () => {
+  it("resuelve PropiedadesController con sus 10 casos de uso", async () => {
     const moduleRef = await bootstrap();
     const controller = moduleRef.get(PropiedadesController);
     expect(controller).toBeInstanceOf(PropiedadesController);

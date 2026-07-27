@@ -78,6 +78,12 @@ export interface PropiedadWire {
   updated_at: string;
 }
 
+/** PUT /admin/propiedades/{id}/ubicacion — respuesta 200 (DESIGN-028), shape acotado del contrato. */
+export interface UbicacionWire {
+  latitud: number | null;
+  longitud: number | null;
+}
+
 export interface HistorialEstadoWire {
   id: string;
   estado_anterior: string;
@@ -157,6 +163,11 @@ export function aPropiedadWire(propiedad: Propiedad, fotos?: FotoPublica[]): Pro
     wire.fotos = fotos.map((foto) => aPropiedadFotoWire(foto, p.id));
   }
   return wire;
+}
+
+/** Mapea el aggregate al shape acotado `{ latitud, longitud }` de PUT .../ubicacion (RN-033). */
+export function aUbicacionWire(propiedad: Propiedad): UbicacionWire {
+  return { latitud: propiedad.latitud, longitud: propiedad.longitud };
 }
 
 /** Mapea una entrada de historial al contrato `HistorialEstado` (DESIGN-028). */

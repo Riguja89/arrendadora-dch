@@ -27,6 +27,20 @@ export interface AntibotConfig {
   verifyUrl: string;
 }
 
+/**
+ * Configuración de geocodificación de direcciones (ADR-011, RN-033). `driver` selecciona el
+ * adaptador del `GeocodingPort`: `stub` (dev/tests, sin credenciales — coordenadas
+ * determinísticas) o `google` (producción, Google Geocoding API). La **API key** NUNCA se
+ * hardcodea — viene por env (secrets-scan), restringida por IP (ADR-011).
+ */
+export interface GeocodingConfig {
+  driver: "google" | "stub";
+  /** API key de Google Geocoding (solo backend, restringida por IP — nunca en el repo). */
+  apiKey: string;
+  /** Endpoint de Geocoding API (configurable para tests/mocks). */
+  geocodeUrl: string;
+}
+
 /** Configuración por variables de entorno — cargada vía @nestjs/config (ADR-002). */
 export interface AppConfig {
   port: number;
@@ -38,6 +52,7 @@ export interface AppConfig {
   portalUrl: string;
   multimedia: MultimediaConfig;
   antibot: AntibotConfig;
+  geocoding: GeocodingConfig;
 }
 
 export default (): AppConfig => ({
@@ -58,5 +73,10 @@ export default (): AppConfig => ({
     scoreMinimo: parseFloat(process.env.RECAPTCHA_SCORE_MIN ?? "0.5"),
     verifyUrl:
       process.env.RECAPTCHA_VERIFY_URL ?? "https://www.google.com/recaptcha/api/siteverify",
+  },
+  geocoding: {
+    driver: process.env.GEOCODING_DRIVER === "google" ? "google" : "stub",
+    apiKey: process.env.GOOGLE_GEOCODING_API_KEY ?? "",
+    geocodeUrl: process.env.GEOCODING_URL ?? "https://maps.googleapis.com/maps/api/geocode/json",
   },
 });
