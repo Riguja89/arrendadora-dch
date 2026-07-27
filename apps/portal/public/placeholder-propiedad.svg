@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="Sin foto disponible">
+  <rect width="640" height="400" fill="#e5e7eb" />
+  <g fill="#9ca3af">
+    <path d="M320 120 L440 220 H400 V300 H240 V220 H200 Z" />
+  </g>
+  <text x="320" y="350" font-family="system-ui, sans-serif" font-size="22" fill="#4b5563" text-anchor="middle">
+    Sin foto disponible
+  </text>
+</svg>

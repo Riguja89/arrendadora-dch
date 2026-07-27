@@ -1,0 +1,84 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { API_BASE_URL, peticionApi } from "./http-client";
+
+function mockFetchOnce(response: Partial<Response> & { json: () => Promise<unknown> }) {
+  const fetchMock = vi.fn().mockResolvedValue(response as Response);
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+describe("peticionApi", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("usa http://localhost:3000/v1 como base por defecto", () => {
+    expect(API_BASE_URL).toBe("http://localhost:3000/v1");
+  });
+
+  it("devuelve { ok: true, data } cuando la respuesta es 2xx", async () => {
+    const fetchMock = mockFetchOnce({
+      ok: true,
+      json: async () => ({ data: ["propiedad-1"] }),
+    });
+
+    const resultado = await peticionApi<{ data: string[] }>("/public/propiedades");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_BASE_URL}/public/propiedades`,
+      expect.objectContaining({ method: "GET", cache: "no-store" }),
+    );
+    expect(resultado).toEqual({ ok: true, data: { data: ["propiedad-1"] } });
+  });
+
+  it("devuelve { ok: false, error } con el envelope ADR-015 cuando la respuesta no es 2xx", async () => {
+    mockFetchOnce({
+      ok: false,
+      json: async () => ({
+        error: "NOT_FOUND",
+        message: "La propiedad solicitada no está disponible.",
+        correlation_id: "11111111-1111-1111-1111-111111111111",
+      }),
+    });
+
+    const resultado = await peticionApi("/public/propiedades/slug-inexistente");
+
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) {
+      expect(resultado.error.error).toBe("NOT_FOUND");
+      expect(resultado.error.correlation_id).toBe("11111111-1111-1111-1111-111111111111");
+    }
+  });
+
+  it("sintetiza un error INTERNAL_ERROR si el body no-2xx no es JSON válido", async () => {
+    mockFetchOnce({
+      ok: false,
+      json: async () => {
+        throw new SyntaxError("Unexpected end of JSON input");
+      },
+    });
+
+    const resultado = await peticionApi("/public/propiedades");
+
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) {
+      expect(resultado.error.error).toBe("INTERNAL_ERROR");
+      expect(resultado.error.correlation_id).toBeTruthy();
+    }
+  });
+
+  it("normaliza excepciones de red (fetch rechazado) a SERVICE_UNAVAILABLE", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new TypeError("fetch failed")),
+    );
+
+    const resultado = await peticionApi("/public/propiedades");
+
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) {
+      expect(resultado.error.error).toBe("SERVICE_UNAVAILABLE");
+    }
+  });
+});
