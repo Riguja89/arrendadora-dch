@@ -131,6 +131,20 @@ describe("Binding wire snake_case → DTO camelCase (M-01)", () => {
     expect(typeof args.tamanoPagina).toBe("number");
   });
 
+  it("GET /v1/admin/usuarios con `tamano_pagina` fuera de rango reporta `campo: tamano_pagina` (D-004, ADR-015)", async () => {
+    const respuesta = await request(app.getHttpServer())
+      .get("/v1/admin/usuarios")
+      .query({ tamano_pagina: "101" });
+
+    expect(respuesta.status).toBe(422);
+    expect(respuesta.body.detalles).toEqual([
+      expect.objectContaining({
+        campo: "tamano_pagina",
+        mensaje: "El tamaño de página no puede ser mayor a 100.",
+      }),
+    ]);
+  });
+
   it("control negativo: el pipe SÍ es estricto — un campo desconocido produce 422", async () => {
     const respuesta = await request(app.getHttpServer())
       .post("/v1/auth/reset-password")
