@@ -67,13 +67,13 @@ describe("marcarFotoPortada", () => {
 describe("eliminarFoto", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("hace DELETE al mismo path de portada (contrato DESIGN-028, ver nota en fotos-api.ts)", async () => {
+  it("hace DELETE a /admin/propiedades/{id}/fotos/{fotoId} (contrato DESIGN-028)", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 204, json: vi.fn() }));
 
     await eliminarFoto("prop-1", "foto-9");
 
     const [url, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
-    expect(url).toBe(`${API_BASE_URL}/admin/propiedades/prop-1/fotos/foto-9/portada`);
+    expect(url).toBe(`${API_BASE_URL}/admin/propiedades/prop-1/fotos/foto-9`);
     expect(init.method).toBe("DELETE");
   });
 });
