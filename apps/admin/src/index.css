@@ -332,3 +332,84 @@
   align-items: end;
   margin: var(--space-3) 0;
 }
+
+/* ---- Galería de fotos (spec-004) ---- */
+
+.fotos-field {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.fotos-field__subir {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  margin: var(--space-2) 0;
+}
+
+.fotos-field__subir:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.fotos-field__rechazos {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fotos-field__galeria {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-3) 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-4);
+}
+
+.fotos-field__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fotos-field__miniatura-wrap {
+  position: relative;
+}
+
+.fotos-field__miniatura {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.fotos-field__badge-portada {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.fotos-field__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.fotos-field__acciones button {
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
+}

@@ -45,6 +45,18 @@ export interface Foto {
   created_at: string;
 }
 
+/** Un archivo del lote que el backend rechazó (RN-028) — `POST .../fotos`, respuesta 207. */
+export interface FotoRechazada {
+  nombre_archivo: string;
+  motivo: string;
+}
+
+/** Respuesta 207 de `POST /admin/propiedades/{id}/fotos` — resultado por archivo del lote. */
+export interface CargarFotosRespuesta {
+  cargadas: Foto[];
+  rechazadas: FotoRechazada[];
+}
+
 export interface Propiedad {
   id: string;
   codigo: string;

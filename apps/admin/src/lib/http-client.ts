@@ -16,6 +16,12 @@ export type MetodoHttp = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export interface OpcionesPeticion {
   method?: MetodoHttp;
+  /**
+   * `FormData` se envía tal cual (multipart, ej. carga de fotos — DESIGN-028
+   * `POST /admin/propiedades/{id}/fotos`); cualquier otro valor se serializa como JSON. En ambos
+   * casos el `Content-Type` correcto lo decide el propio `fetch` (el boundary de multipart no se
+   * puede fijar a mano) — ver `esFormData` abajo.
+   */
   body?: unknown;
   signal?: AbortSignal;
 }
@@ -89,13 +95,18 @@ function esRespuestaError(payload: unknown): payload is RespuestaError {
 export async function peticionApi<T>(path: string, opciones: OpcionesPeticion = {}): Promise<RespuestaApi<T>> {
   const { method = "GET", body, signal } = opciones;
 
+  // `FormData` (carga de fotos, multipart) nunca se serializa ni lleva Content-Type manual: el
+  // browser debe fijar `multipart/form-data; boundary=...` por su cuenta — un header explícito
+  // rompe el parseo del backend.
+  const esFormData = typeof FormData !== "undefined" && body instanceof FormData;
+
   let respuesta: Response;
   try {
     respuesta = await fetch(`${API_BASE_URL}${path}`, {
       method,
       credentials: "include",
-      headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      headers: body !== undefined && !esFormData ? { "Content-Type": "application/json" } : undefined,
+      body: body === undefined ? undefined : esFormData ? (body as FormData) : JSON.stringify(body),
       signal,
     });
   } catch {

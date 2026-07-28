@@ -50,6 +50,28 @@ describe("http-client", () => {
     expect(init.body).toBe(JSON.stringify({ email: "a@b.com", password: "x" }));
   });
 
+  it("un body FormData se envía tal cual, sin Content-Type manual ni JSON.stringify (carga de fotos)", async () => {
+    vi.mocked(fetch).mockResolvedValue(respuestaFalsa({ ok: true, status: 207, body: { cargadas: [], rechazadas: [] } }));
+
+    const formData = new FormData();
+    formData.append("archivos", new File(["contenido"], "foto.jpg", { type: "image/jpeg" }));
+
+    await peticionApi("/admin/propiedades/abc/fotos", { method: "POST", body: formData });
+
+    const [, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+    expect(init.headers).toBeUndefined();
+    expect(init.body).toBe(formData);
+  });
+
+  it("una respuesta 207 (Multi-Status) se trata como éxito", async () => {
+    const payload = { cargadas: [{ id: "f1" }], rechazadas: [{ nombre_archivo: "x.gif", motivo: "Formato no compatible" }] };
+    vi.mocked(fetch).mockResolvedValue(respuestaFalsa({ ok: true, status: 207, body: payload }));
+
+    const resultado = await peticionApi("/admin/propiedades/abc/fotos", { method: "POST", body: new FormData() });
+
+    expect(resultado).toEqual({ ok: true, data: payload });
+  });
+
   it("una petición GET sin body no agrega headers", async () => {
     vi.mocked(fetch).mockResolvedValue(respuestaFalsa({ ok: true, status: 200, body: [] }));
 
