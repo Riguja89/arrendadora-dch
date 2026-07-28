@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import type { TipoOperacion } from "@arrendadora/shared";
+import { construirHrefCatalogoSegmento, esOperacionValida } from "@/lib/rutas";
 
 interface OpcionTipoPropiedad {
   id: string;
@@ -44,8 +45,27 @@ export function FiltrosCatalogoForm({ tiposPropiedad, ciudades, valoresIniciales
 
   const hayFiltrosActivos = Boolean(tipoOperacion || tipoPropiedad || ciudad || precioMin || precioMax);
 
+  /**
+   * Navega a la ruta canónica indexable `/propiedades/{operacion}/{ciudad}` (ADR-010, ADR-018
+   * Decisión 1) cuando el visitante completó operación **y** ciudad — los dos ejes que el
+   * cliente pidió rankear (GAP-005). El resto de filtros (RN-024) se preservan como query params
+   * sobre esa ruta. Si falta alguno de los dos, la búsqueda se queda en `/` con query params
+   * (comportamiento acumulativo actual) — no existe página canónica para una búsqueda parcial.
+   */
   function manejarEnvio(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+
+    if (esOperacionValida(tipoOperacion) && ciudad) {
+      const paramsRestantes = new URLSearchParams();
+      if (tipoPropiedad) paramsRestantes.set("tipo_propiedad", tipoPropiedad);
+      if (precioMin) paramsRestantes.set("precio_min", precioMin);
+      if (precioMax) paramsRestantes.set("precio_max", precioMax);
+      const query = paramsRestantes.toString();
+      const rutaCanonica = construirHrefCatalogoSegmento(tipoOperacion, ciudad);
+      router.push(query ? `${rutaCanonica}?${query}` : rutaCanonica);
+      return;
+    }
+
     const params = new URLSearchParams();
     if (tipoOperacion) params.set("tipo_operacion", tipoOperacion);
     if (tipoPropiedad) params.set("tipo_propiedad", tipoPropiedad);

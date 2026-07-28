@@ -1,78 +1,26 @@
-import type { Metadata } from "next";
-import { cache } from "react";
-import { notFound } from "next/navigation";
-import type { TipoOperacion } from "@arrendadora/shared";
-import { obtenerFichaPorSlug } from "@/lib/api/detalle";
+import type { PropiedadDetalle, TipoOperacion } from "@arrendadora/shared";
 import { formatearPrecioCOP } from "@/lib/format";
-import { GaleriaPropiedad } from "@/components/detalle/galeria-propiedad";
-import { MapaUbicacion } from "@/components/detalle/mapa-ubicacion";
-import { ContactoWhatsapp } from "@/components/detalle/contacto-whatsapp";
-
-interface PaginaPropiedadProps {
-  params: Promise<{ slug: string }>;
-}
+import { GaleriaPropiedad } from "./galeria-propiedad";
+import { MapaUbicacion } from "./mapa-ubicacion";
+import { ContactoWhatsapp } from "./contacto-whatsapp";
 
 const ETIQUETA_OPERACION: Record<TipoOperacion, string> = {
   arriendo: "Arriendo",
   venta: "Venta",
 };
 
-/**
- * Memoiza el fetch de la ficha dentro del mismo request (`react.cache`) — `generateMetadata` y
- * el componente de página comparten la misma llamada a `GET /public/propiedades/{slug}` en vez
- * de duplicarla (el cliente HTTP no cachea entre requests, RN "no-store").
- */
-const obtenerFicha = cache(async (slug: string) => obtenerFichaPorSlug(slug));
-
-/** SEO + Open Graph por propiedad (RN-008, ADR-010) — preview real al compartir por WhatsApp/redes. */
-export async function generateMetadata({ params }: PaginaPropiedadProps): Promise<Metadata> {
-  const { slug } = await params;
-  const respuesta = await obtenerFicha(slug);
-
-  if (!respuesta.ok) {
-    return { title: "Propiedad no encontrada" };
-  }
-
-  const { openGraph } = respuesta.data;
-  return {
-    title: openGraph.titulo,
-    description: openGraph.descripcion,
-    openGraph: {
-      title: openGraph.titulo,
-      description: openGraph.descripcion,
-      images: [{ url: openGraph.imagen }],
-      url: openGraph.url,
-      type: "website",
-    },
-  };
+interface FichaPropiedadProps {
+  propiedad: PropiedadDetalle;
 }
 
 /**
- * Ficha de detalle (spec-002, CU-001/CU-002) — SSR real: galería, precio (RN-001), características,
- * mapa aproximado (ADR-011) y contacto por WhatsApp con anti-bot (ADR-007, ADR-012). Propiedades
- * `arrendada_vendida` o archivadas, o un slug inexistente → 404 (RN-025), impuesto por el backend
- * y respetado acá vía `notFound()` de Next.
+ * Contenido visual de la ficha de detalle (CU-002, spec-portal-detalle) — galería, precio
+ * (RN-001), características, mapa aproximado (ADR-011) y contacto por WhatsApp (ADR-007,
+ * ADR-012). Server Component puro (sin fetch propio): la resolución de datos y el 404 (RN-025)
+ * quedan a cargo del caller (`app/propiedades/[operacion]/[segmento]/page.tsx`, ADR-018), que es
+ * el único punto de la ruta que sabe si el segmento es una ficha o un catálogo de ciudad.
  */
-export default async function PaginaPropiedad({ params }: PaginaPropiedadProps) {
-  const { slug } = await params;
-  const respuesta = await obtenerFicha(slug);
-
-  if (!respuesta.ok) {
-    if (respuesta.error.error === "NOT_FOUND") {
-      notFound();
-    }
-
-    return (
-      <main className="container">
-        <div className="catalogo__error" role="alert">
-          <p>{respuesta.error.message}</p>
-        </div>
-      </main>
-    );
-  }
-
-  const propiedad = respuesta.data;
-
+export function FichaPropiedad({ propiedad }: FichaPropiedadProps) {
   return (
     <main className="container ficha-propiedad">
       {propiedad.badgeReservada ? (

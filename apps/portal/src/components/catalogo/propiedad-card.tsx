@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PropiedadResumen } from "@arrendadora/shared";
 import { formatearPrecioCOP } from "@/lib/format";
+import { construirHrefFicha } from "@/lib/rutas";
 import { PropiedadImagen } from "./propiedad-imagen";
 
 const ETIQUETA_OPERACION: Record<PropiedadResumen["tipoOperacion"], string> = {
@@ -17,7 +18,7 @@ export function PropiedadCard({ propiedad }: PropiedadCardProps) {
   return (
     <li className="propiedad-card">
       <Link
-        href={`/propiedades/${propiedad.slug}`}
+        href={construirHrefFicha(propiedad.tipoOperacion, propiedad.slug)}
         className="propiedad-card__enlace"
         aria-label={`Ver detalle de ${propiedad.titulo}`}
       >
