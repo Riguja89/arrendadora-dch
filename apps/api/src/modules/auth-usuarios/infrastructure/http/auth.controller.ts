@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Throttle, seconds } from "@nestjs/throttler";
 import type { Request, Response } from "express";
 import type { SesionUsuario } from "@arrendadora/shared";
 import type { AppConfig } from "../../../../config/configuration";
@@ -37,6 +38,13 @@ export class AuthController {
     private readonly config: ConfigService<AppConfig, true>,
   ) {}
 
+  /**
+   * Rate-limit reforzado (A-08): 5 intentos/min por IP — complementa el bloqueo de cuenta tras 5
+   * intentos fallidos consecutivos (`MAX_INTENTOS_FALLIDOS`, ADR-004/GAP-006), que es por
+   * usuario. Sin este límite, un atacante podría probar credential-stuffing contra MUCHAS
+   * cuentas distintas desde una sola IP sin disparar el bloqueo de ninguna cuenta individual.
+   */
+  @Throttle({ default: { limit: 5, ttl: seconds(60) } })
   @Post("login")
   @HttpCode(HttpStatus.OK)
   async login(

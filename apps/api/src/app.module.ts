@@ -1,5 +1,7 @@
 import { Module, type MiddlewareConsumer, type NestModule } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
+import { ThrottlerGuard, ThrottlerModule, seconds } from "@nestjs/throttler";
 import configuration from "./config/configuration";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AppController } from "./app.controller";
@@ -14,6 +16,10 @@ import { ConfiguracionModule } from "./modules/configuracion/configuracion.modul
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+    // A-08 (dep-audit BUILD-036) — rate limiting global por IP. Almacenamiento in-memory (default
+    // del paquete): suficiente para el monolito de un solo proceso actual; ver limitación de
+    // producción documentada en `main.ts`/CLAUDE.md si se escala a múltiples instancias.
+    ThrottlerModule.forRoot([{ name: "default", ttl: seconds(60), limit: 100 }]),
     PrismaModule,
     // Los 5 bounded contexts del monolito modular hexagonal (ADR-001, DESIGN-027).
     PortalCatalogoModule,
@@ -25,7 +31,11 @@ import { ConfiguracionModule } from "./modules/configuracion/configuracion.modul
     ConfiguracionModule,
   ],
   controllers: [AppController],
-  providers: [],
+  providers: [
+    // Guard global (A-08): todo endpoint queda limitado por defecto a 100 req/min/IP; los
+    // endpoints sensibles (login, contacto WhatsApp) lo sobrescriben con `@Throttle(...)`.
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule implements NestModule {
   /**

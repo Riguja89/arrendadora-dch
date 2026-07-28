@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Throttle, seconds } from "@nestjs/throttler";
 import type { AppConfig } from "../../../../config/configuration";
 import { ObtenerFichaPorSlugUseCase } from "../../application/use-cases/obtener-ficha-por-slug.use-case";
 import { GenerarContactoWhatsappUseCase } from "../../application/use-cases/generar-contacto-whatsapp.use-case";
@@ -43,6 +44,13 @@ export class PortalDetalleController {
    * `{ deep_link }` si aprueba; 403 si rechaza; 503 si el anti-bot no está disponible (RN-003); 404
    * si la propiedad no es visible (RN-025). Los status los emiten los errores de dominio (ADR-015).
    */
+  /**
+   * Rate-limit reforzado (A-08): 10 intentos/min por IP. El anti-bot (reCAPTCHA v3, ADR-007) ya
+   * filtra tráfico automatizado por score, pero es probabilístico y no acota el COSTO de llamar
+   * repetidamente a `siteverify` (Google) ni el volumen de deep links generados — el throttler
+   * agrega un techo duro, complementario, sin depender del veredicto del anti-bot.
+   */
+  @Throttle({ default: { limit: 10, ttl: seconds(60) } })
   @Post("propiedades/:slug/contacto-whatsapp")
   @HttpCode(HttpStatus.OK)
   async contactoWhatsapp(

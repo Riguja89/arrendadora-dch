@@ -2,11 +2,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { INestApplication } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import request from "supertest";
+import helmet from "helmet";
 
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "../src/prisma/prisma.service";
 import { AllExceptionsFilter } from "../src/common/http/all-exceptions.filter";
 import { crearValidationPipe } from "../src/common/http/validation-pipe.factory";
+import { SanitizePipe } from "../src/common/http/sanitize.pipe";
 
 /**
  * Prueba de integración del bootstrap real del `AppModule` bajo Express 5 / path-to-regexp v8
@@ -35,9 +37,11 @@ describe("Bootstrap de AppModule bajo Express 5 (H-01)", () => {
       .compile();
 
     app = moduleRef.createNestApplication();
-    // Fidelidad con `main.ts`: mismo filtro global, mismo pipe y mismo prefijo versionado.
+    // Fidelidad con `main.ts`: mismo helmet, mismo filtro global, mismos pipes (en el mismo
+    // orden) y mismo prefijo versionado (A-08).
+    app.use(helmet());
     app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalPipes(crearValidationPipe());
+    app.useGlobalPipes(new SanitizePipe(), crearValidationPipe());
     app.setGlobalPrefix("v1", { exclude: ["health"] });
     // Si el comodín `"{*path}"` del CorrelationIdMiddleware fuera inválido bajo Express 5,
     // este `init()` lanzaría — de ahí que arrancar sin error ya es la primera aserción de H-01.
@@ -71,5 +75,45 @@ describe("Bootstrap de AppModule bajo Express 5 (H-01)", () => {
       .set("X-Correlation-ID", entrante);
 
     expect(respuesta.headers["x-correlation-id"]).toBe(entrante);
+  });
+});
+
+/**
+ * A-08 (dep-audit BUILD-036) — helmet registrado globalmente en el bootstrap. Verifica que los
+ * headers de seguridad estándar lleguen en una respuesta real del `AppModule` completo (mismo
+ * harness que H-01 arriba) — config por DEFECTO, sin relajar CSP/CORP (ver nota en `main.ts`).
+ */
+describe("Headers de seguridad — helmet (A-08)", () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    const moduleRef: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(PrismaService)
+      .useValue({})
+      .compile();
+
+    app = moduleRef.createNestApplication();
+    app.use(helmet());
+    app.useGlobalFilters(new AllExceptionsFilter());
+    app.useGlobalPipes(new SanitizePipe(), crearValidationPipe());
+    app.setGlobalPrefix("v1", { exclude: ["health"] });
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app?.close();
+  });
+
+  it("GET /health incluye los headers de seguridad de helmet", async () => {
+    const respuesta = await request(app.getHttpServer()).get("/health");
+
+    expect(respuesta.status).toBe(200);
+    expect(respuesta.headers["x-content-type-options"]).toBe("nosniff");
+    expect(respuesta.headers["x-frame-options"]).toBe("SAMEORIGIN");
+    expect(respuesta.headers["x-dns-prefetch-control"]).toBe("off");
+    // X-Powered-By ("Express") es justo lo que helmet remueve — huella de que está activo.
+    expect(respuesta.headers["x-powered-by"]).toBeUndefined();
   });
 });
