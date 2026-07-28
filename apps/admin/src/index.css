@@ -134,3 +134,201 @@
   border-radius: var(--radius-md);
   color: var(--color-warning);
 }
+
+/* ---- Propiedades: shared helpers ---- */
+
+.texto-muted {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.campo-error {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.campo--checkbox label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 400;
+}
+
+.campo--ancho {
+  grid-column: 1 / -1;
+}
+
+.boton-primario {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.boton-primario:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.badge--estado-disponible {
+  background-color: #dcfce7;
+  color: var(--color-success);
+}
+
+.badge--estado-reservada {
+  background-color: #fef3c7;
+  color: var(--color-warning);
+}
+
+.badge--estado-arrendada_vendida {
+  background-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.badge--archivada {
+  margin-left: var(--space-2);
+  background-color: #fee2e2;
+  color: var(--color-error);
+}
+
+/* ---- Listado de propiedades ---- */
+
+.propiedades-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.propiedades-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: end;
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.propiedades-filtros__acciones {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.tabla-propiedades,
+.tabla-historial {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--space-4);
+}
+
+.tabla-propiedades th,
+.tabla-propiedades td,
+.tabla-historial th,
+.tabla-historial td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
+.tabla-propiedades__acciones {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* ---- Formulario de propiedad ---- */
+
+.propiedad-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 900px;
+  margin-bottom: var(--space-6);
+}
+
+.propiedad-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.propiedad-form select,
+.propiedad-form textarea {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  color: var(--color-text);
+}
+
+.propiedad-form__amenidades {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.propiedad-form__amenidad {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+}
+
+.propiedad-form__amenidad-cantidad {
+  width: 4rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Estado y ubicación ---- */
+
+.estado-control {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.estado-control__acciones {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.ubicacion-field {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.ubicacion-field__manual {
+  display: flex;
+  gap: var(--space-4);
+  align-items: end;
+  margin: var(--space-3) 0;
+}
