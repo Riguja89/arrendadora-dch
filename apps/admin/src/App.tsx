@@ -7,6 +7,8 @@ import { PropiedadesPage } from "@/routes/PropiedadesPage";
 import { PropiedadNuevaPage } from "@/routes/PropiedadNuevaPage";
 import { PropiedadEditarPage } from "@/routes/PropiedadEditarPage";
 import { UsuariosPage } from "@/routes/UsuariosPage";
+import { UsuarioNuevaPage } from "@/routes/UsuarioNuevoPage";
+import { UsuarioEditarPage } from "@/routes/UsuarioEditarPage";
 import { RequireAuth } from "@/routes/RequireAuth";
 import { RequireRole } from "@/routes/RequireRole";
 
@@ -16,7 +18,8 @@ import { RequireRole } from "@/routes/RequireRole";
  * - Todo lo demás vive detrás de `RequireAuth` (sesión) dentro de `AdminLayout`.
  * - `/propiedades/nueva` y `/propiedades/:id/editar` (spec-003 CU-001/CU-002) están disponibles
  *   para los tres roles — el alcance real (propias vs. todas) lo aplica el backend (RN-010/011).
- * - `/usuarios` además exige `RequireRole roles={["administrador"]}` (matriz RBAC ADR-014).
+ * - `/usuarios`, `/usuarios/nuevo` y `/usuarios/:id/editar` (spec-005 CU-003/CU-004) además
+ *   exigen `RequireRole roles={["administrador"]}` (matriz RBAC ADR-014).
  */
 export function App() {
   return (
@@ -33,6 +36,8 @@ export function App() {
               <Route path="/propiedades/:id/editar" element={<PropiedadEditarPage />} />
               <Route element={<RequireRole roles={["administrador"]} />}>
                 <Route path="/usuarios" element={<UsuariosPage />} />
+                <Route path="/usuarios/nuevo" element={<UsuarioNuevaPage />} />
+                <Route path="/usuarios/:id/editar" element={<UsuarioEditarPage />} />
               </Route>
             </Route>
           </Route>
