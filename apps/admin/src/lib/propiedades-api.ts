@@ -53,6 +53,16 @@ export function editarPropiedad(id: string, payload: PropiedadEditar): Promise<R
   return peticionApi<Propiedad>(`/admin/propiedades/${id}`, { method: "PUT", body: payload });
 }
 
+/**
+ * HU-003 (RN-026) — duplica una propiedad como plantilla. Endpoint dedicado sin body: el
+ * backend copia campos de texto/precio/tipo/amenidades (sin fotos), asigna código y slug
+ * nuevos y crea la copia en estado `disponible` — el cliente no arma ningún payload de
+ * campos, solo dispara la acción (DESIGN-028 `POST .../duplicar`).
+ */
+export function duplicarPropiedad(id: string): Promise<RespuestaApi<Propiedad>> {
+  return peticionApi<Propiedad>(`/admin/propiedades/${id}/duplicar`, { method: "POST" });
+}
+
 export function archivarPropiedad(id: string): Promise<RespuestaApi<Propiedad>> {
   return peticionApi<Propiedad>(`/admin/propiedades/${id}/archivar`, { method: "POST" });
 }

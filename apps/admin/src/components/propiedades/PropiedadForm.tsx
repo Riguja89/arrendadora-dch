@@ -25,8 +25,10 @@ interface PropiedadFormProps {
  *
  * El campo "Agente responsable" (RN-016) solo es editable para Administrador: `GET
  * /admin/usuarios` exige ese rol (DESIGN-028). Para Agente, el backend autoasigna al usuario
- * actual (se omite el campo del formulario). Para Editor, el campo queda oculto en este
- * incremento — decisión pragmática documentada en el CLAUDE.md del módulo.
+ * actual (se omite el campo del formulario). Para Editor, el campo queda oculto — regla
+ * definitiva, no decisión pragmática pendiente: confirmado por ADR-018 (Decisión 2) con base
+ * en GAP-001 de `ANALYZE-010-gaps-auth-usuarios.md` ("Editor = igual que Agente, pero... sin
+ * poder asignarlas o cambiar el agente responsable"). Ver ADR-018 para la justificación completa.
  */
 export function PropiedadForm({ modo, propiedad, onGuardado }: PropiedadFormProps) {
   const { rol } = useAuth();

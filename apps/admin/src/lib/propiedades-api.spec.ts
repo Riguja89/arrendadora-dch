@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { API_BASE_URL } from "./http-client";
-import { construirQueryPropiedades, listarPropiedades } from "./propiedades-api";
+import { construirQueryPropiedades, duplicarPropiedad, listarPropiedades } from "./propiedades-api";
+import type { Propiedad } from "./propiedades-types";
 
 /**
  * Cubre el query-string builder de filtros (lógica pura) y el shape de la petición de
@@ -73,5 +74,76 @@ describe("listarPropiedades", () => {
     await listarPropiedades();
 
     expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/admin/propiedades`, expect.anything());
+  });
+});
+
+describe("duplicarPropiedad", () => {
+  const copia: Propiedad = {
+    id: "prop-copia-id",
+    codigo: "PROP-0099",
+    titulo: "Apartamento Chapinero",
+    slug: "apartamento-chapinero-0099",
+    descripcion: "Copia de una propiedad existente",
+    tipo_operacion: "arriendo",
+    tipo_propiedad_id: "tipo-1",
+    ciudad: "Bogotá",
+    barrio: "Chapinero",
+    direccion: null,
+    precio: 2500000,
+    area: 65,
+    habitaciones: 2,
+    banos: 1,
+    estrato: 4,
+    parqueaderos: 1,
+    estado: "disponible",
+    destacada: false,
+    archivada: false,
+    agente_id: "agente-1",
+    latitud: null,
+    longitud: null,
+    amenidades: [{ amenidad_id: "am-1", nombre: "Piscina", cantidad: 1 }],
+    fotos: [],
+    publicada_en: null,
+    created_at: "2026-07-28T00:00:00.000Z",
+    updated_at: "2026-07-28T00:00:00.000Z",
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 201,
+        json: async () => copia,
+      }),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("hace POST a /admin/propiedades/{id}/duplicar sin body (RN-026 — el backend copia los campos, no el cliente)", async () => {
+    await duplicarPropiedad("prop-original-id");
+
+    expect(fetch).toHaveBeenCalledWith(
+      `${API_BASE_URL}/admin/propiedades/prop-original-id/duplicar`,
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: undefined,
+        headers: undefined,
+      }),
+    );
+  });
+
+  it("propaga la copia devuelta por el backend, siempre en estado disponible y sin fotos", async () => {
+    const resultado = await duplicarPropiedad("prop-original-id");
+
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(resultado.data.id).not.toBe("prop-original-id");
+    expect(resultado.data.estado).toBe("disponible");
+    expect(resultado.data.fotos).toEqual([]);
   });
 });

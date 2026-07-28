@@ -1,8 +1,15 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import type { TipoOperacion, Usuario } from "@arrendadora/shared";
 import { useAuth } from "@/lib/auth-context";
-import { archivarPropiedad, listarAgentesActivos, listarPropiedades, listarTiposPropiedad, restaurarPropiedad } from "@/lib/propiedades-api";
+import {
+  archivarPropiedad,
+  duplicarPropiedad,
+  listarAgentesActivos,
+  listarPropiedades,
+  listarTiposPropiedad,
+  restaurarPropiedad,
+} from "@/lib/propiedades-api";
 import { ETIQUETAS_ESTADO } from "@/lib/estados-propiedad";
 import { formatearPrecioCOP } from "@/lib/format";
 import type { EstadoPropiedad, PaginacionMetaWire, Propiedad, TipoPropiedadCatalogo } from "@/lib/propiedades-types";
@@ -17,6 +24,7 @@ const ESTADOS: EstadoPropiedad[] = ["disponible", "reservada", "arrendada_vendid
  */
 export function PropiedadesPage() {
   const { rol } = useAuth();
+  const navegar = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const estado = (searchParams.get("estado") as EstadoPropiedad | null) ?? "";
@@ -137,6 +145,22 @@ export function PropiedadesPage() {
     }
     void actualizarPropiedadEnLista(resultado.data);
     if (archivada) setPropiedades((actual) => actual?.filter((p) => p.id !== id) ?? actual);
+  }
+
+  /**
+   * HU-003 (RN-026) — duplica la propiedad y lleva al Agente/Editor/Administrador directo a la
+   * edición de la copia (CU-002 flujo alternativo). Acción aditiva y no destructiva — sin
+   * confirmación previa, a diferencia de archivar (que sí oculta la propiedad del portal).
+   */
+  async function manejarDuplicar(id: string): Promise<void> {
+    setAccionando(id);
+    const resultado = await duplicarPropiedad(id);
+    setAccionando(null);
+    if (!resultado.ok) {
+      window.alert(resultado.error.message);
+      return;
+    }
+    navegar(`/propiedades/${resultado.data.id}/editar`);
   }
 
   return (
@@ -277,6 +301,9 @@ export function PropiedadesPage() {
                     </td>
                     <td className="tabla-propiedades__acciones">
                       <Link to={`/propiedades/${propiedad.id}/editar`}>Editar</Link>
+                      <button type="button" disabled={accionando === propiedad.id} onClick={() => void manejarDuplicar(propiedad.id)}>
+                        Duplicar
+                      </button>
                       {!propiedad.archivada && (rol === "administrador" || rol === "editor") ? (
                         <button type="button" disabled={accionando === propiedad.id} onClick={() => void manejarArchivar(propiedad.id)}>
                           Archivar
