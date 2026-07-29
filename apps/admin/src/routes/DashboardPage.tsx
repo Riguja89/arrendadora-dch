@@ -2,21 +2,16 @@ import { useAuth } from "@/lib/auth-context";
 
 /**
  * Placeholder de dashboard — sin datos reales todavía (pendiente de incremento de propiedades).
- * Muestra el aviso de contraseña temporal (GAP-004 opción A) cuando aplica; el flujo de cambio
- * de contraseña propio (`POST /auth/change-password`) queda para un incremento posterior.
+ * El aviso de contraseña temporal (GAP-004) ya no vive acá: `RequireAuth` intercepta la
+ * navegación mientras `requiereCambioPassword=true` y redirige a `/cambiar-password` antes de
+ * que esta pantalla llegue a renderizar.
  */
 export function DashboardPage() {
-  const { usuario, requiereCambioPassword } = useAuth();
+  const { usuario } = useAuth();
 
   return (
     <section>
       <h2>Dashboard</h2>
-      {requiereCambioPassword ? (
-        <p className="admin-layout__aviso" role="status">
-          Tu cuenta tiene una contraseña temporal asignada por el Administrador. El cambio de
-          contraseña estará disponible en un próximo incremento del panel.
-        </p>
-      ) : null}
       <p>Hola, {usuario?.nombre ?? ""}. Resumen operativo del panel — pendiente de implementar.</p>
     </section>
   );

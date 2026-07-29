@@ -38,6 +38,7 @@ export function AdminLayout() {
               {usuario.nombre} · <span className="admin-layout__rol">{rol ? ETIQUETAS_ROL[rol] : ""}</span>
             </span>
           ) : null}
+          <Link to="/cambiar-password">Cambiar contraseña</Link>
           <button type="button" onClick={() => void manejarLogout()}>
             Cerrar sesión
           </button>

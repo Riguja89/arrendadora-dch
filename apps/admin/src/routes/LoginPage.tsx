@@ -1,9 +1,11 @@
 import { useId, useState, type FormEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
 
 interface EstadoNavegacionLogin {
   from?: { pathname: string };
+  /** Mensaje de confirmación tras un flujo previo (ej. reset/cambio de contraseña exitoso). */
+  mensajeExito?: string;
 }
 
 /** CU-001 — inicio de sesión con email + contraseña (RN-020, sin OAuth social). */
@@ -21,6 +23,7 @@ export function LoginPage() {
 
   const estadoOrigen = location.state as EstadoNavegacionLogin | null;
   const destinoTrasLogin = estadoOrigen?.from?.pathname ?? "/dashboard";
+  const mensajeExito = estadoOrigen?.mensajeExito ?? null;
 
   async function manejarEnvio(evento: FormEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();
@@ -42,6 +45,11 @@ export function LoginPage() {
   return (
     <main className="login-page">
       <h1>Arrendadora — Panel admin</h1>
+      {mensajeExito ? (
+        <p className="login-page__exito" role="status">
+          {mensajeExito}
+        </p>
+      ) : null}
       <form className="login-page__form" onSubmit={manejarEnvio} noValidate>
         <div className="campo">
           <label htmlFor={emailId}>Correo electrónico</label>
@@ -78,6 +86,9 @@ export function LoginPage() {
           {enviando ? "Ingresando…" : "Ingresar"}
         </button>
       </form>
+      <p>
+        <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
+      </p>
     </main>
   );
 }
