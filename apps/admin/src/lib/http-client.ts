@@ -26,7 +26,14 @@ export interface OpcionesPeticion {
   signal?: AbortSignal;
 }
 
-export type RespuestaApi<T> = { ok: true; data: T } | { ok: false; error: RespuestaError };
+/**
+ * `aborted: true` marca un resultado producido por una petición cancelada (`AbortController`,
+ * típicamente por un cleanup de `useEffect` o React 18 StrictMode — ver `esErrorDeAbort` abajo).
+ * Es aditivo: no rompe a los consumidores existentes que solo miran `ok`, pero permite que un
+ * llamador que sí quiere distinguir cancelación de un error de red real lo verifique antes de
+ * mostrar `error.message` al usuario. Una cancelación NUNCA debe surfacear como error de UI.
+ */
+export type RespuestaApi<T> = { ok: true; data: T } | { ok: false; error: RespuestaError; aborted?: true };
 
 /**
  * Endpoints públicos del contrato (`security: []`, DESIGN-028) — un 401 en estos paths es parte
@@ -70,6 +77,27 @@ function errorDeRed(): RespuestaError {
   };
 }
 
+function errorAbortado(): RespuestaError {
+  return {
+    error: "SERVICE_UNAVAILABLE",
+    message: "Solicitud cancelada.",
+    correlation_id: generarCorrelationIdCliente(),
+  };
+}
+
+/**
+ * Distingue una cancelación (`AbortController.abort()`) de un error de red real. Cubre las dos
+ * formas en que puede observarse: el `fetch` rechaza con un `AbortError` (nombre estándar del
+ * error, ya sea `DOMException` en browsers/Node modernos u otro objeto con `name: "AbortError"`
+ * en runtimes/tests que no usan `DOMException`), o la señal ya quedó marcada `aborted` cuando el
+ * rechazo llegó (algunos entornos de test simulan el rechazo sin tipar el error).
+ */
+function esErrorDeAbort(err: unknown, signal: AbortSignal | undefined): boolean {
+  if (signal?.aborted) return true;
+  if (typeof DOMException !== "undefined" && err instanceof DOMException && err.name === "AbortError") return true;
+  return typeof err === "object" && err !== null && (err as { name?: unknown }).name === "AbortError";
+}
+
 function errorGenerico(): RespuestaError {
   return {
     error: "INTERNAL_ERROR" as CodigoError,
@@ -109,7 +137,10 @@ export async function peticionApi<T>(path: string, opciones: OpcionesPeticion = 
       body: body === undefined ? undefined : esFormData ? (body as FormData) : JSON.stringify(body),
       signal,
     });
-  } catch {
+  } catch (err) {
+    if (esErrorDeAbort(err, signal)) {
+      return { ok: false, error: errorAbortado(), aborted: true };
+    }
     return { ok: false, error: errorDeRed() };
   }
 

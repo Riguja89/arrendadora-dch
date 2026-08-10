@@ -48,20 +48,27 @@ export function PropiedadesPage() {
   // Catálogos para los selects de filtro — se cargan una vez (y de nuevo si cambia el rol).
   useEffect(() => {
     const controlador = new AbortController();
+    let cancelado = false;
     void (async () => {
       const tiposResp = await listarTiposPropiedad(controlador.signal);
+      if (cancelado) return;
       if (tiposResp.ok) setTipos(tiposResp.data);
       if (rol === "administrador") {
         const agentesResp = await listarAgentesActivos(controlador.signal);
+        if (cancelado) return;
         if (agentesResp.ok) setAgentes(agentesResp.data);
       }
     })();
-    return () => controlador.abort();
+    return () => {
+      cancelado = true;
+      controlador.abort();
+    };
   }, [rol]);
 
   // Listado — se refresca en cada cambio de filtros/paginación (URL como fuente de verdad).
   useEffect(() => {
     const controlador = new AbortController();
+    let cancelado = false;
     setCargando(true);
     setError(null);
 
@@ -79,6 +86,9 @@ export function PropiedadesPage() {
         },
         controlador.signal,
       );
+      // Una petición cancelada (unmount, StrictMode double-invoke o cambio de filtro
+      // mientras esta seguía en vuelo) NO es un error — la ignoramos sin tocar el estado.
+      if (cancelado) return;
       if (!resultado.ok) {
         setError(resultado.error.message);
         setCargando(false);
@@ -90,7 +100,10 @@ export function PropiedadesPage() {
       setCargando(false);
     })();
 
-    return () => controlador.abort();
+    return () => {
+      cancelado = true;
+      controlador.abort();
+    };
   }, [estado, tipoOperacion, tipoPropiedadId, agenteFiltro, archivada, q, pagina]);
 
   function actualizarFiltro(clave: string, valor: string): void {

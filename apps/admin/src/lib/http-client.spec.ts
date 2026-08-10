@@ -125,7 +125,7 @@ describe("http-client", () => {
     }
   });
 
-  it("un fallo de red (fetch rechaza) retorna ok:false con SERVICE_UNAVAILABLE", async () => {
+  it("un fallo de red (fetch rechaza) retorna ok:false con SERVICE_UNAVAILABLE, sin aborted", async () => {
     vi.mocked(fetch).mockRejectedValue(new TypeError("Failed to fetch"));
 
     const resultado = await peticionApi("/admin/propiedades");
@@ -133,6 +133,44 @@ describe("http-client", () => {
     expect(resultado.ok).toBe(false);
     if (!resultado.ok) {
       expect(resultado.error.error).toBe("SERVICE_UNAVAILABLE");
+      expect(resultado.aborted).toBeUndefined();
+    }
+  });
+
+  it("una petición cancelada (fetch rechaza con AbortError/DOMException) se marca aborted:true, distinguible de un error de red real", async () => {
+    vi.mocked(fetch).mockRejectedValue(new DOMException("The operation was aborted.", "AbortError"));
+
+    const resultado = await peticionApi("/admin/propiedades");
+
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) {
+      expect(resultado.aborted).toBe(true);
+    }
+  });
+
+  it("una petición cancelada cuyo rechazo NO es DOMException (solo { name: 'AbortError' }) también se marca aborted:true", async () => {
+    vi.mocked(fetch).mockRejectedValue({ name: "AbortError", message: "aborted" });
+
+    const resultado = await peticionApi("/admin/propiedades");
+
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) {
+      expect(resultado.aborted).toBe(true);
+    }
+  });
+
+  it("si la signal ya está aborted cuando fetch rechaza (aunque el error no se llame AbortError), también se marca aborted:true", async () => {
+    const controlador = new AbortController();
+    vi.mocked(fetch).mockImplementation(async () => {
+      controlador.abort();
+      throw new Error("cualquier motivo, la signal ya quedó aborted");
+    });
+
+    const resultado = await peticionApi("/admin/propiedades", { signal: controlador.signal });
+
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) {
+      expect(resultado.aborted).toBe(true);
     }
   });
 

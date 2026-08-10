@@ -20,11 +20,14 @@ export function UsuarioEditarPage() {
   useEffect(() => {
     if (!id) return;
     const controlador = new AbortController();
+    let cancelado = false;
     setCargando(true);
     setError(null);
 
     void (async () => {
       const resultado = await obtenerUsuario(id, controlador.signal);
+      // Petición cancelada (unmount o StrictMode double-invoke) — no es un error.
+      if (cancelado) return;
       if (!resultado.ok) {
         setError(resultado.error.message);
         setCargando(false);
@@ -34,7 +37,10 @@ export function UsuarioEditarPage() {
       setCargando(false);
     })();
 
-    return () => controlador.abort();
+    return () => {
+      cancelado = true;
+      controlador.abort();
+    };
   }, [id]);
 
   if (!id) return null;

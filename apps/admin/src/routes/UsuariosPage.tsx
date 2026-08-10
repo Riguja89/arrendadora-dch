@@ -30,6 +30,7 @@ export function UsuariosPage() {
 
   useEffect(() => {
     const controlador = new AbortController();
+    let cancelado = false;
     setCargando(true);
     setError(null);
 
@@ -38,6 +39,9 @@ export function UsuariosPage() {
         { rol: rol || undefined, estado: estado || undefined, pagina, tamano_pagina: 20 },
         controlador.signal,
       );
+      // Petición cancelada (unmount, StrictMode double-invoke o cambio de filtro en vuelo) —
+      // no es un error, se ignora sin tocar el estado.
+      if (cancelado) return;
       if (!resultado.ok) {
         setError(resultado.error.message);
         setCargando(false);
@@ -48,7 +52,10 @@ export function UsuariosPage() {
       setCargando(false);
     })();
 
-    return () => controlador.abort();
+    return () => {
+      cancelado = true;
+      controlador.abort();
+    };
   }, [rol, estado, pagina]);
 
   function actualizarFiltro(clave: string, valor: string): void {
