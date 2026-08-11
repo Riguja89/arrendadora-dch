@@ -9,6 +9,16 @@ export interface MultimediaConfig {
   cdnBaseUrl: string;
   s3Bucket: string;
   s3Region: string;
+  /**
+   * Endpoint del proveedor S3-compatible (ADR-008). En producción normalmente vacío (AWS SDK
+   * resuelve el endpoint estándar por región); en dev apunta a LocalStack (`http://localhost:4566`).
+   */
+  s3Endpoint: string;
+  /** `true` para endpoints S3-compatibles (LocalStack, MinIO) que requieren path-style en vez de virtual-hosted-style. */
+  s3ForcePathStyle: boolean;
+  /** Credenciales AWS — NUNCA hardcodeadas; en producción vienen por IAM role/env, en dev por LocalStack (secrets-scan). */
+  s3AccessKeyId: string;
+  s3SecretAccessKey: string;
 }
 
 /**
@@ -41,6 +51,20 @@ export interface GeocodingConfig {
   geocodeUrl: string;
 }
 
+/**
+ * Lee una env var tratando el string vacío (`""`) como ausente — a diferencia de `??`, que solo
+ * cae al default con `undefined`. Un `.env` con `AWS_S3_BUCKET=` (vacío, sin valor) produce hoy
+ * `""` en `process.env`, no `undefined`; sin este helper, `s3Bucket` queda `""` y la URL resultante
+ * tiene doble slash sin bucket (`http://localhost:4566//propiedades/...`). Aplica solo a valores con
+ * default de dev (bucket/endpoint/región/credenciales S3) — NUNCA a `storageDriver`, que sí debe
+ * distinguir explícitamente `"s3"` de cualquier otro valor (incluido vacío) para no activar S3 por
+ * accidente.
+ */
+function envOrDefault(valor: string | undefined, porDefecto: string): string {
+  const normalizado = valor?.trim();
+  return normalizado ? normalizado : porDefecto;
+}
+
 /** Configuración por variables de entorno — cargada vía @nestjs/config (ADR-002). */
 export interface AppConfig {
   port: number;
@@ -64,8 +88,16 @@ export default (): AppConfig => ({
   multimedia: {
     storageDriver: process.env.MULTIMEDIA_STORAGE_DRIVER === "s3" ? "s3" : "local",
     cdnBaseUrl: process.env.MULTIMEDIA_CDN_BASE_URL ?? "http://localhost:3000/media",
-    s3Bucket: process.env.AWS_S3_BUCKET ?? "",
-    s3Region: process.env.AWS_REGION ?? "",
+    // Defaults de DEV apuntando a LocalStack (bucket ya provisionado, ver ADR-008). En
+    // producción se sobreescriben por env — nunca se hardcodean credenciales reales.
+    // `envOrDefault` (no `??`): una env var presente pero vacía ("") debe caer al default igual
+    // que si estuviera ausente — evita URLs con doble slash sin bucket.
+    s3Bucket: envOrDefault(process.env.AWS_S3_BUCKET, "arrendadora-multimedia-dev"),
+    s3Region: envOrDefault(process.env.AWS_REGION, "us-east-1"),
+    s3Endpoint: envOrDefault(process.env.AWS_S3_ENDPOINT, "http://localhost:4566"),
+    s3ForcePathStyle: process.env.AWS_S3_FORCE_PATH_STYLE !== "false",
+    s3AccessKeyId: envOrDefault(process.env.AWS_ACCESS_KEY_ID, "test"),
+    s3SecretAccessKey: envOrDefault(process.env.AWS_SECRET_ACCESS_KEY, "test"),
   },
   antibot: {
     driver: process.env.ANTIBOT_DRIVER === "recaptcha" ? "recaptcha" : "stub",

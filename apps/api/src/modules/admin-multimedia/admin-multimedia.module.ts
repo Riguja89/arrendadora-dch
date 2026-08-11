@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { AuthUsuariosModule } from "../auth-usuarios/auth-usuarios.module";
+import type { MultimediaConfig } from "../../config/configuration";
 
 import { FOTO_REPOSITORY } from "./domain/ports/foto.repository.port";
 import { ALMACENAMIENTO_OBJETOS } from "./domain/ports/almacenamiento-objetos.port";
@@ -11,6 +13,7 @@ import { MULTIMEDIA_QUERY } from "./domain/ports/multimedia-query.port";
 
 import { FotoPrismaRepository } from "./infrastructure/persistence/foto-prisma.repository";
 import { LocalAlmacenamientoAdapter } from "./infrastructure/storage/local-almacenamiento.adapter";
+import { S3AlmacenamientoAdapter } from "./infrastructure/storage/s3-almacenamiento.adapter";
 import { PassthroughOptimizadorAdapter } from "./infrastructure/imagen/passthrough-optimizador.adapter";
 import { PropiedadAccesoPrismaAdapter } from "./infrastructure/acceso/propiedad-acceso-prisma.adapter";
 import { CryptoIdGeneratorAdapter } from "./infrastructure/support/crypto-id-generator.adapter";
@@ -24,6 +27,19 @@ import { DefinirPortadaUseCase } from "./application/use-cases/definir-portada.u
 import { EliminarFotoUseCase } from "./application/use-cases/eliminar-foto.use-case";
 
 import { MultimediaController } from "./infrastructure/http/multimedia.controller";
+import type { AlmacenamientoObjetosPort } from "./domain/ports/almacenamiento-objetos.port";
+
+/**
+ * Factory de selección del adaptador de almacenamiento (ADR-008), extraída para poder testearse sin
+ * levantar el módulo completo de Nest. `MULTIMEDIA_STORAGE_DRIVER=s3` → `S3AlmacenamientoAdapter`;
+ * cualquier otro valor (default) → `LocalAlmacenamientoAdapter` (retrocompatible).
+ */
+export function crearAlmacenamientoAdapter(config: ConfigService): AlmacenamientoObjetosPort {
+  const multimedia = config.get<MultimediaConfig>("multimedia");
+  return multimedia?.storageDriver === "s3"
+    ? new S3AlmacenamientoAdapter(config)
+    : new LocalAlmacenamientoAdapter(config);
+}
 
 /**
  * 4. Panel Admin — Multimedia (ANALYZE-004). Galería de fotos como composición del aggregate
@@ -38,9 +54,10 @@ import { MultimediaController } from "./infrastructure/http/multimedia.controlle
  * Exporta `MULTIMEDIA_QUERY` (`MultimediaQueryPort`): puerto de solo lectura para que
  * admin-propiedades cierre su `fotos[]` y el portal arme la galería/og:image (RN-014) in-process.
  *
- * Selección de almacenamiento: se cablea el adaptador local/dev (`LocalAlmacenamientoAdapter`). El
- * adaptador S3+CloudFront (producción, `MULTIMEDIA_STORAGE_DRIVER=s3`) se enchufa aquí cuando exista,
- * sin tocar dominio ni casos de uso. Igual que la optimización (passthrough dev vs Sharp producción).
+ * Selección de almacenamiento (ADR-008): por env `MULTIMEDIA_STORAGE_DRIVER`. `s3` → adaptador S3
+ * (producción y dev sobre LocalStack); cualquier otro valor (default) → `LocalAlmacenamientoAdapter`
+ * (dev/tests sin proveedor real, retrocompatible). Mismo patrón que `VERIFICADOR_ANTIBOT` en
+ * `portal-detalle.module.ts` y que la optimización (passthrough dev vs Sharp producción).
  */
 @Module({
   imports: [AuthUsuariosModule],
@@ -48,7 +65,11 @@ import { MultimediaController } from "./infrastructure/http/multimedia.controlle
   providers: [
     // Puertos → adaptadores de infraestructura
     { provide: FOTO_REPOSITORY, useClass: FotoPrismaRepository },
-    { provide: ALMACENAMIENTO_OBJETOS, useClass: LocalAlmacenamientoAdapter },
+    {
+      provide: ALMACENAMIENTO_OBJETOS,
+      inject: [ConfigService],
+      useFactory: crearAlmacenamientoAdapter,
+    },
     { provide: OPTIMIZADOR_IMAGENES, useClass: PassthroughOptimizadorAdapter },
     { provide: PROPIEDAD_ACCESO, useClass: PropiedadAccesoPrismaAdapter },
     { provide: ID_GENERATOR, useClass: CryptoIdGeneratorAdapter },
