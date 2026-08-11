@@ -33,13 +33,16 @@ services:
     restart: unless-stopped
 
   localstack:
-    image: docker.io/localstack/localstack:latest
+    # Pineado a 3.0 (community, sin token/licencia Pro). "latest" pasó a exigir
+    # activación de licencia Pro y el contenedor crashea al iniciar.
+    image: docker.io/localstack/localstack:3.0
     container_name: arrendadora-localstack
     environment:
       SERVICES: s3
       DEBUG: "0"
-      # Persistencia de datos S3 entre reinicios del contenedor.
-      PERSISTENCE: "1"
+      # PERSISTENCE es feature Pro (requiere licencia) — deshabilitada para community.
+      # No se necesita persistencia entre reinicios en dev.
+      # PERSISTENCE: "1"
     ports:
       - "127.0.0.1:4566:4566"
     volumes:
