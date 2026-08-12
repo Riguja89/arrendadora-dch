@@ -47,12 +47,11 @@ export function FotosField({ propiedadId, fotos, onActualizado }: FotosFieldProp
   const cupoCompleto = fotos.length >= MAX_FOTOS_POR_PROPIEDAD;
 
   async function manejarSeleccionArchivos(evento: ChangeEvent<HTMLInputElement>): Promise<void> {
-    const lista = evento.target.files;
+    const archivos = evento.target.files ? Array.from(evento.target.files) : [];
     evento.target.value = ""; // permite re-seleccionar el mismo archivo si se corrige el lote
-    if (!lista || lista.length === 0) return;
+    if (archivos.length === 0) return;
 
     setError(null);
-    const archivos = Array.from(lista);
     const { validos, rechazados } = validarLoteFotos(archivos, fotos.length);
     const rechazosCliente = rechazados.map((r) => ({ nombreArchivo: r.archivo.name, motivo: r.motivo }));
 
