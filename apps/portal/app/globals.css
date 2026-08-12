@@ -238,6 +238,17 @@ a:hover {
   gap: var(--space-6);
 }
 
+.ficha-propiedad__volver {
+  align-self: flex-start;
+  display: inline-block;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ficha-propiedad__volver:hover {
+  text-decoration: underline;
+}
+
 .ficha-propiedad__banner-reservada {
   padding: var(--space-3) var(--space-4);
   background-color: var(--color-warning);
@@ -471,4 +482,51 @@ a:hover {
 
 .contacto-whatsapp__mensaje--error {
   color: var(--color-error);
+}
+
+/* ---- Utilidades de accesibilidad ---- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Estado de carga global (app/loading.tsx) ---- */
+
+.cargando-portal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: 60vh;
+  padding: var(--space-8);
+}
+
+.cargando-portal__spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  animation: cargando-spin 0.8s linear infinite;
+}
+
+@keyframes cargando-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cargando-portal__spinner {
+    animation: none;
+  }
 }

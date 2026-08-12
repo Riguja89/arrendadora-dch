@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { PropiedadDetalle, TipoOperacion } from "@arrendadora/shared";
 import { formatearPrecioCOP } from "@/lib/format";
 import { GaleriaPropiedad } from "./galeria-propiedad";
@@ -23,6 +24,10 @@ interface FichaPropiedadProps {
 export function FichaPropiedad({ propiedad }: FichaPropiedadProps) {
   return (
     <main className="container ficha-propiedad">
+      <Link href="/" className="ficha-propiedad__volver">
+        ← Volver a propiedades
+      </Link>
+
       {propiedad.badgeReservada ? (
         <div className="ficha-propiedad__banner-reservada" role="status">
           Esta propiedad está reservada. Aún podés contactar al agente para consultar
