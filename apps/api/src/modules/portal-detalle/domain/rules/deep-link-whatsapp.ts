@@ -6,7 +6,8 @@
  * - `{numero}` es el número central de la inmobiliaria (ADR-012 Modelo B) reducido a solo dígitos
  *   (wa.me no admite `+`, espacios ni separadores).
  * - `{mensaje}` resulta de interpolar la plantilla configurable con el `{codigo}` de la propiedad
- *   (GAP-002) y luego URL-encodearlo.
+ *   (GAP-002), anexarle el link canónico a la ficha (deep link a la propiedad, decisión de UX:
+ *   append automático — no marcador editable) y luego URL-encodearlo en una sola pasada.
  */
 
 /** Marcador único admitido en la plantilla del mensaje (GAP-002, coherente con `PlantillaMensaje`). */
@@ -32,15 +33,21 @@ export function normalizarNumeroWhatsapp(numero: string): string {
 }
 
 /**
- * Arma el deep link `wa.me` completo (ADR-012, RN-004): número normalizado + mensaje interpolado y
- * URL-encodeado.
+ * Arma el deep link `wa.me` completo (ADR-012, RN-004): número normalizado + mensaje interpolado,
+ * con el link canónico a la ficha anexado al final, y URL-encodeado en una sola pasada.
+ *
+ * `urlFicha` llega como dato plano ya resuelto por la capa de aplicación (el dominio no conoce
+ * config): el mensaje interpolado con `{codigo}` se completa con `"\n\nVer la propiedad: {url}"`
+ * para que el agente pueda identificar la propiedad sin depender solo del código.
  */
 export function construirDeepLinkWhatsapp(
   numeroCentral: string,
   plantillaMensaje: string,
   codigo: string,
+  urlFicha: string,
 ): string {
   const numero = normalizarNumeroWhatsapp(numeroCentral);
-  const mensaje = resolverMensajeWhatsapp(plantillaMensaje, codigo);
+  const mensajeBase = resolverMensajeWhatsapp(plantillaMensaje, codigo);
+  const mensaje = `${mensajeBase}\n\nVer la propiedad: ${urlFicha}`;
   return `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
 }

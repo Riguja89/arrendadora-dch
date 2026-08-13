@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import type { ConfigService } from "@nestjs/config";
+import type { AppConfig } from "../../../../config/configuration";
 import { GenerarContactoWhatsappUseCase } from "./generar-contacto-whatsapp.use-case";
 import {
   ContactoRechazadoError,
@@ -55,24 +57,60 @@ function buildDeps(prop: PropiedadDetalle | null, resultadoAntibot: ResultadoAnt
   return { propiedades, antibot, configuracion };
 }
 
+function buildConfig(portalUrl = "http://localhost:5174"): ConfigService<AppConfig, true> {
+  return {
+    get: vi.fn().mockReturnValue(portalUrl),
+  } as unknown as ConfigService<AppConfig, true>;
+}
+
 const APROBADO: ResultadoAntibot = { disponible: true, aprobado: true, score: 0.9 };
 
 describe("GenerarContactoWhatsappUseCase", () => {
-  it("genera el deep link con el número central cuando el anti-bot aprueba (CU-002, ADR-012)", async () => {
+  it("genera el deep link con el número central y el link canónico a la ficha anexado cuando el anti-bot aprueba (CU-002, ADR-012)", async () => {
     const deps = buildDeps(propiedad(), APROBADO);
-    const uc = new GenerarContactoWhatsappUseCase(deps.propiedades, deps.antibot, deps.configuracion);
+    const config = buildConfig();
+    const uc = new GenerarContactoWhatsappUseCase(
+      deps.propiedades,
+      deps.antibot,
+      deps.configuracion,
+      config,
+    );
 
     const resultado = await uc.ejecutar({ slug: "apartamento-chapinero", recaptchaToken: "tok" });
 
     expect(deps.antibot.verificar).toHaveBeenCalledWith("tok");
+    expect(config.get).toHaveBeenCalledWith("portalUrl", { infer: true });
     expect(resultado.deepLink).toBe(
-      "https://wa.me/573001234567?text=Hola%2C%20me%20interesa%20la%20propiedad%20AP-001.",
+      "https://wa.me/573001234567?text=Hola%2C%20me%20interesa%20la%20propiedad%20AP-001.%0A%0AVer%20la%20propiedad%3A%20http%3A%2F%2Flocalhost%3A5174%2Fpropiedades%2Farriendo%2Fapartamento-chapinero",
+    );
+  });
+
+  it("construye la URL canónica con {operacion}/{slug} de la propiedad y sanea slashes finales de la base (ADR-018)", async () => {
+    const deps = buildDeps(propiedad(), APROBADO);
+    const config = buildConfig("http://localhost:5174///");
+    const uc = new GenerarContactoWhatsappUseCase(
+      deps.propiedades,
+      deps.antibot,
+      deps.configuracion,
+      config,
+    );
+
+    const resultado = await uc.ejecutar({ slug: "apartamento-chapinero", recaptchaToken: "tok" });
+
+    const texto = decodeURIComponent(resultado.deepLink.split("?text=")[1]);
+    expect(texto).toContain(
+      "Ver la propiedad: http://localhost:5174/propiedades/arriendo/apartamento-chapinero",
     );
   });
 
   it("lanza 404 cuando la propiedad no es visible, sin invocar el anti-bot (RN-025)", async () => {
     const deps = buildDeps(null, APROBADO);
-    const uc = new GenerarContactoWhatsappUseCase(deps.propiedades, deps.antibot, deps.configuracion);
+    const uc = new GenerarContactoWhatsappUseCase(
+      deps.propiedades,
+      deps.antibot,
+      deps.configuracion,
+      buildConfig(),
+    );
 
     await expect(
       uc.ejecutar({ slug: "inexistente", recaptchaToken: "tok" }),
@@ -82,7 +120,12 @@ describe("GenerarContactoWhatsappUseCase", () => {
 
   it("lanza 503 cuando el anti-bot no está disponible, sin generar enlace (RN-003)", async () => {
     const deps = buildDeps(propiedad(), { disponible: false, aprobado: false, score: null });
-    const uc = new GenerarContactoWhatsappUseCase(deps.propiedades, deps.antibot, deps.configuracion);
+    const uc = new GenerarContactoWhatsappUseCase(
+      deps.propiedades,
+      deps.antibot,
+      deps.configuracion,
+      buildConfig(),
+    );
 
     await expect(
       uc.ejecutar({ slug: "apartamento-chapinero", recaptchaToken: "tok" }),
@@ -92,7 +135,12 @@ describe("GenerarContactoWhatsappUseCase", () => {
 
   it("lanza 403 cuando el anti-bot rechaza por score bajo (probable bot, ADR-007)", async () => {
     const deps = buildDeps(propiedad(), { disponible: true, aprobado: false, score: 0.1 });
-    const uc = new GenerarContactoWhatsappUseCase(deps.propiedades, deps.antibot, deps.configuracion);
+    const uc = new GenerarContactoWhatsappUseCase(
+      deps.propiedades,
+      deps.antibot,
+      deps.configuracion,
+      buildConfig(),
+    );
 
     await expect(
       uc.ejecutar({ slug: "apartamento-chapinero", recaptchaToken: "tok" }),

@@ -1,4 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import type { AppConfig } from "../../../../config/configuration";
 import {
   CONFIGURACION_QUERY,
   type ConfiguracionQueryPort,
@@ -39,7 +41,9 @@ export interface ResultadoContacto {
  *      enlace sin validación.
  *    - Rechazado (score bajo el umbral) → `ContactoRechazadoError` (403). El visitante puede reintentar.
  * 3. Construir el deep link con el número central y la plantilla configurados (ADR-012, GAP-002),
- *    interpolando el `{codigo}` de la propiedad (RN-004).
+ *    interpolando el `{codigo}` de la propiedad (RN-004) y anexando el link canónico a la ficha
+ *    (deep link a la propiedad) para que el agente identifique la propiedad sin depender solo del
+ *    código — decisión de UX: append automático, no marcador editable en la plantilla.
  *
  * Nota (ADR-012, Modelo B): el número es SIEMPRE el central de la inmobiliaria. La spec-002 (RN-022)
  * proponía número por agente con fallback central; el cliente resolvió el número central único en
@@ -52,6 +56,7 @@ export class GenerarContactoWhatsappUseCase {
     private readonly propiedades: PropiedadDetalleRepositoryPort,
     @Inject(VERIFICADOR_ANTIBOT) private readonly antibot: VerificadorAntibotPort,
     @Inject(CONFIGURACION_QUERY) private readonly configuracion: ConfiguracionQueryPort,
+    private readonly config: ConfigService<AppConfig, true>,
   ) {}
 
   async ejecutar(parametros: ParametrosContacto): Promise<ResultadoContacto> {
@@ -68,11 +73,14 @@ export class GenerarContactoWhatsappUseCase {
       throw new ContactoRechazadoError();
     }
 
-    const config = await this.configuracion.obtenerConfiguracionPublica();
+    const configuracionPublica = await this.configuracion.obtenerConfiguracionPublica();
+    const portalBaseUrl = this.config.get("portalUrl", { infer: true });
+    const urlFicha = `${portalBaseUrl.replace(/\/+$/, "")}/propiedades/${propiedad.tipoOperacion}/${propiedad.slug}`;
     const deepLink = construirDeepLinkWhatsapp(
-      config.whatsappNumeroCentral,
-      config.whatsappPlantillaMensaje,
+      configuracionPublica.whatsappNumeroCentral,
+      configuracionPublica.whatsappPlantillaMensaje,
       propiedad.codigo,
+      urlFicha,
     );
 
     return { deepLink };
