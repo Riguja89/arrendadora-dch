@@ -24,12 +24,12 @@ describe("construirUrlEmbedMapa (ADR-011 — mapa aproximado, degradación)", ()
     expect(construirUrlEmbedMapa(null, "clave-123")).toBeNull();
   });
 
-  it("construye la URL de Google Maps Embed centrada en la ubicación aproximada", () => {
+  it("construye la URL de Google Maps Embed (modo place, con marcador) en la ubicación aproximada", () => {
     const url = construirUrlEmbedMapa(UBICACION, "clave-123");
     expect(url).not.toBeNull();
-    expect(url).toContain("https://www.google.com/maps/embed/v1/view?");
+    expect(url).toContain("https://www.google.com/maps/embed/v1/place?");
     expect(url).toContain("key=clave-123");
-    expect(url).toContain(`center=${encodeURIComponent("5.33,-72.4")}`);
+    expect(url).toContain(`q=${encodeURIComponent("5.33,-72.4")}`);
     expect(url).toContain("zoom=15");
   });
 });
