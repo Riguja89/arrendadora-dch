@@ -20,9 +20,10 @@ services:
       POSTGRES_DB: arrendadora_dev
     ports:
       # Bind solo a loopback — no exponer a la LAN (infra de dev).
-      # Host 5433 (no 5432) para NO chocar con un PostgreSQL nativo de Windows
-      # que ya escucha en 0.0.0.0:5432 en esta máquina. Dentro del contenedor sigue en 5432.
-      - "127.0.0.1:5433:5432"
+      # Host 5434 (no 5432, no 5433) para NO chocar con los PostgreSQL nativos de Windows
+      # que ya escuchan en 0.0.0.0:5432 y 127.0.0.1:5433 en esta máquina. Dentro del
+      # contenedor sigue en 5432.
+      - "127.0.0.1:5434:5432"
     volumes:
       - arrendadora_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -44,7 +45,11 @@ services:
       # No se necesita persistencia entre reinicios en dev.
       # PERSISTENCE: "1"
     ports:
-      - "127.0.0.1:4566:4566"
+      # Expuesto a la LAN (0.0.0.0, no solo loopback) para pruebas desde dispositivos móviles en
+      # la misma red (las fotos de propiedades se sirven desde acá; "localhost" desde el celular
+      # es el celular, no esta PC). Infra dev, sin datos reales — revertir a "127.0.0.1:4566:4566"
+      # si ya no se necesita probar desde otro dispositivo.
+      - "0.0.0.0:4566:4566"
     volumes:
       - arrendadora_localstack:/var/lib/localstack
     healthcheck:
