@@ -13,7 +13,11 @@
     "test:cov": "vitest run --coverage",
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
-    "prisma:migrate:deploy": "prisma migrate deploy"
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@arrendadora/shared": "workspace:*",
@@ -42,6 +46,7 @@
     "@types/supertest": "^6.0.2",
     "prisma": "^5.22.0",
     "supertest": "^7.0.0",
+    "tsx": "^4.23.12",
     "typescript": "^5.7.2",
     "unplugin-swc": "^1.5.1",
     "vite-tsconfig-paths": "^5.1.4",
