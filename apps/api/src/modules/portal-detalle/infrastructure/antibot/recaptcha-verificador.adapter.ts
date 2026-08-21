@@ -35,6 +35,7 @@ export class RecaptchaVerificadorAdapter implements VerificadorAntibotPort {
       recaptchaSecret: "",
       scoreMinimo: 0.5,
       verifyUrl: "https://www.google.com/recaptcha/api/siteverify",
+      verifyTimeoutMs: 7000,
     };
   }
 
@@ -49,10 +50,15 @@ export class RecaptchaVerificadorAdapter implements VerificadorAntibotPort {
     let datos: RespuestaSiteverify;
     try {
       const cuerpo = new URLSearchParams({ secret: this.config.recaptchaSecret, response: token });
+      // Timeout explícito (RECAPTCHA_VERIFY_TIMEOUT_MS, default 7s): sin esto, una red móvil
+      // lenta puede dejar el fetch colgado hasta el timeout del socket del OS (~2 min) antes de
+      // caer en el catch de abajo. Con AbortSignal.timeout, el mismo camino fail-closed (ADR-007)
+      // se alcanza rápido — no cambia la política de seguridad, solo la latencia del fallo.
       const respuesta = await fetch(this.config.verifyUrl, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: cuerpo.toString(),
+        signal: AbortSignal.timeout(this.config.verifyTimeoutMs),
       });
       if (!respuesta.ok) {
         this.logger.error(`[antibot:recaptcha] siteverify respondió HTTP ${respuesta.status}`);

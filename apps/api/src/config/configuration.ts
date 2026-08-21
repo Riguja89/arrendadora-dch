@@ -35,6 +35,15 @@ export interface AntibotConfig {
   scoreMinimo: number;
   /** Endpoint `siteverify` de Google (configurable para tests/mocks). */
   verifyUrl: string;
+  /**
+   * Timeout explícito (ms) para el fetch a `siteverify`. Sin esto, una red móvil lenta/variable
+   * puede dejar el fetch colgado hasta el timeout del socket del OS (~2 min); el adapter lo
+   * interpreta como "servicio antibot no disponible" (fail-closed, ADR-007) recién después de
+   * esperar ese tiempo, y el usuario ve el bloqueo con una demora enorme. Con este timeout, el
+   * mismo camino fail-closed se alcanza rápido. Default generoso para redes móviles lentas sin
+   * colgar la request del usuario.
+   */
+  verifyTimeoutMs: number;
 }
 
 /**
@@ -105,6 +114,7 @@ export default (): AppConfig => ({
     scoreMinimo: parseFloat(process.env.RECAPTCHA_SCORE_MIN ?? "0.5"),
     verifyUrl:
       process.env.RECAPTCHA_VERIFY_URL ?? "https://www.google.com/recaptcha/api/siteverify",
+    verifyTimeoutMs: parseInt(process.env.RECAPTCHA_VERIFY_TIMEOUT_MS ?? "7000", 10),
   },
   geocoding: {
     driver: process.env.GEOCODING_DRIVER === "google" ? "google" : "stub",
