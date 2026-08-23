@@ -131,7 +131,7 @@ export async function generateMetadata({ params }: PaginaSegmentoProps): Promise
     const etiqueta = resolucion.operacion === "arriendo" ? "en arriendo" : "en venta";
     return {
       title: `Propiedades ${etiqueta} en ${resolucion.ciudad}`,
-      description: `Explorá propiedades ${etiqueta} en ${resolucion.ciudad}, Casanare: apartamentos, casas, locales y más con Arrendadora.`,
+      description: `Explora propiedades ${etiqueta} en ${resolucion.ciudad}, Casanare: apartamentos, casas, locales y más con Arrendadora.`,
       alternates: { canonical: construirHrefCatalogoSegmento(resolucion.operacion, resolucion.ciudad) },
       robots: { index: true, follow: true },
     };
@@ -201,8 +201,8 @@ async function CatalogoSegmento({ operacion, ciudad, searchParams }: CatalogoSeg
           Propiedades {etiqueta} en {ciudad}
         </h1>
         <p>
-          Explorá el catálogo de propiedades {etiqueta} en {ciudad}, Casanare. Filtrá por tipo de
-          inmueble y precio para encontrar la opción que buscás.
+          Explora el catálogo de propiedades {etiqueta} en {ciudad}, Casanare. Filtra por tipo de
+          inmueble y precio para encontrar la opción que buscas.
         </p>
       </header>
 

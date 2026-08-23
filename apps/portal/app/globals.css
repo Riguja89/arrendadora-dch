@@ -194,7 +194,9 @@ a:hover {
 .filtros-catalogo__acciones button {
   height: 44px;
   padding-inline: var(--spacing-6);
-  background-color: var(--color-primary-600);
+  /* primary-700 (#8a481f) sobre blanco = ~6.9:1 → WCAG AA/AAA (texto normal
+     16px semibold). primary-600 (#a9744f) queda en ~3.96:1, falla AA. */
+  background-color: var(--color-primary-700);
   color: var(--color-text-inverse);
   font-family: var(--font-body);
   font-weight: var(--font-weight-semibold);
@@ -208,7 +210,7 @@ a:hover {
 }
 
 .filtros-catalogo__acciones button:hover {
-  background-color: var(--color-primary-700);
+  background-color: var(--color-primary-800);
 }
 
 .filtros-catalogo__acciones button:active {
@@ -294,7 +296,9 @@ a:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--color-primary-600);
+  /* primary-700 (#8a481f) sobre el icono blanco (~currentColor inverso) mantiene
+     contraste WCAG AA para el aria-label textual embebido. */
+  background-color: var(--color-primary-700);
   color: var(--color-text-inverse);
   border: none;
   border-radius: var(--radius-full);
@@ -307,7 +311,7 @@ a:hover {
 
 @media (hover: hover) and (pointer: fine) {
   .boton-filtro-flotante:hover {
-    background-color: var(--color-primary-700);
+    background-color: var(--color-primary-800);
   }
 }
 
@@ -510,7 +514,10 @@ a:hover {
 .filtros-drawer-form__cta {
   width: 100%;
   height: 48px;
-  background-color: var(--color-primary-600);
+  /* Igualado al CTA desktop — primary-700 (#8a481f) garantiza WCAG AA
+     (~6.9:1 contra blanco) sin bajar a primary-800 (que quedaría muy oscuro
+     para el reposo del botón principal del drawer). */
+  background-color: var(--color-primary-700);
   color: var(--color-text-inverse);
   font-family: var(--font-body);
   font-weight: var(--font-weight-semibold);
@@ -524,7 +531,7 @@ a:hover {
 }
 
 .filtros-drawer-form__cta:hover {
-  background-color: var(--color-primary-700);
+  background-color: var(--color-primary-800);
 }
 
 .filtros-drawer-form__cta:active {

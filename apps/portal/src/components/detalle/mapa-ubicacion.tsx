@@ -25,7 +25,7 @@ export function MapaUbicacion({ ubicacion, ciudad, barrio }: MapaUbicacionProps)
           Ubicación aproximada: {barrio}, {ciudad}.
         </p>
         <p className="mapa-ubicacion__nota">
-          El mapa interactivo no está disponible en este momento. Contactanos para conocer la
+          El mapa interactivo no está disponible en este momento. Contáctanos para conocer la
           ubicación exacta.
         </p>
       </div>

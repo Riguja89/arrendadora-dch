@@ -162,12 +162,12 @@ export async function generarContactoWhatsapp(
 export function mensajeErrorContacto(error: RespuestaError): string {
   switch (error.error) {
     case "SERVICE_UNAVAILABLE":
-      return "En este momento no podemos validar tu solicitud. Intentá de nuevo en unos minutos.";
+      return "En este momento no podemos validar tu solicitud. Intenta de nuevo en unos minutos.";
     case "FORBIDDEN":
-      return "No pudimos validar tu solicitud. Por favor intentá de nuevo.";
+      return "No pudimos validar tu solicitud. Por favor intenta de nuevo.";
     case "NOT_FOUND":
       return "Esta propiedad ya no está disponible.";
     default:
-      return "Ocurrió un error inesperado. Intentá de nuevo en unos minutos.";
+      return "Ocurrió un error inesperado. Intenta de nuevo en unos minutos.";
   }
 }

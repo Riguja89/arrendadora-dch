@@ -72,7 +72,7 @@ function errorServicioNoDisponible(): RespuestaApi<never> {
     ok: false,
     error: {
       error: "SERVICE_UNAVAILABLE",
-      message: "No pudimos conectar con el servicio de propiedades. Intentá de nuevo en unos minutos.",
+      message: "No pudimos conectar con el servicio de propiedades. Intenta de nuevo en unos minutos.",
       correlation_id: generarCorrelationId(),
     },
   };

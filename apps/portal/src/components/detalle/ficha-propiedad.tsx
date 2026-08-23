@@ -30,7 +30,7 @@ export function FichaPropiedad({ propiedad }: FichaPropiedadProps) {
 
       {propiedad.badgeReservada ? (
         <div className="ficha-propiedad__banner-reservada" role="status">
-          Esta propiedad está reservada. Aún podés contactar al agente para consultar
+          Esta propiedad está reservada. Aún puedes contactar al agente para consultar
           disponibilidad futura.
         </div>
       ) : null}

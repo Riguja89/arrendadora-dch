@@ -7,7 +7,7 @@ import { estaRecaptchaConfigurado, ejecutarRecaptcha } from "@/lib/recaptcha";
 type EstadoContacto = "inactivo" | "validando" | "error";
 
 const MENSAJE_ANTIBOT_NO_DISPONIBLE =
-  "En este momento no podemos validar tu solicitud. Intentá de nuevo en unos minutos.";
+  "En este momento no podemos validar tu solicitud. Intenta de nuevo en unos minutos.";
 
 interface ContactoWhatsappProps {
   slug: string;

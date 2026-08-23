@@ -157,17 +157,17 @@ describe("mensajeErrorContacto (RN-003, degradación anti-bot)", () => {
   it("usa el mensaje exacto de RN-003 cuando el anti-bot no está disponible (503)", () => {
     expect(
       mensajeErrorContacto({ error: "SERVICE_UNAVAILABLE", message: "x", correlation_id: "id" }),
-    ).toBe("En este momento no podemos validar tu solicitud. Intentá de nuevo en unos minutos.");
+    ).toBe("En este momento no podemos validar tu solicitud. Intenta de nuevo en unos minutos.");
   });
 
   it("usa un mensaje de rechazo sin detalles técnicos cuando el anti-bot bloquea (403)", () => {
     const mensaje = mensajeErrorContacto({ error: "FORBIDDEN", message: "x", correlation_id: "id" });
-    expect(mensaje).toBe("No pudimos validar tu solicitud. Por favor intentá de nuevo.");
+    expect(mensaje).toBe("No pudimos validar tu solicitud. Por favor intenta de nuevo.");
   });
 
   it("usa un mensaje genérico para errores no mapeados explícitamente", () => {
     expect(
       mensajeErrorContacto({ error: "INTERNAL_ERROR", message: "x", correlation_id: "id" }),
-    ).toBe("Ocurrió un error inesperado. Intentá de nuevo en unos minutos.");
+    ).toBe("Ocurrió un error inesperado. Intenta de nuevo en unos minutos.");
   });
 });

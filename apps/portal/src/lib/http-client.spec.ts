@@ -117,7 +117,7 @@ describe("peticionApiPost", () => {
       ok: false,
       json: async () => ({
         error: "FORBIDDEN",
-        message: "No pudimos validar tu solicitud. Por favor intentá de nuevo.",
+        message: "No pudimos validar tu solicitud. Por favor intenta de nuevo.",
         correlation_id: "22222222-2222-2222-2222-222222222222",
       }),
     });
