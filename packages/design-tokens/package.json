@@ -10,7 +10,8 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./css": "./src/tokens.css"
+    "./css": "./src/tokens.css",
+    "./portal-theme": "./src/portal-theme.css"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

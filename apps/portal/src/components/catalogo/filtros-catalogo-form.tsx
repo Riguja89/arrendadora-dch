@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import type { TipoOperacion } from "@arrendadora/shared";
-import { construirHrefCatalogoSegmento, esOperacionValida } from "@/lib/rutas";
+import {
+  construirRutaCatalogo,
+  hayFiltrosActivos as hayFiltrosActivosLib,
+  type ValoresFiltrosCatalogo,
+} from "@/lib/catalogo-filtros";
 
 interface OpcionTipoPropiedad {
   id: string;
@@ -27,6 +31,14 @@ interface FiltrosCatalogoFormProps {
   tiposPropiedad: OpcionTipoPropiedad[];
   ciudades: OpcionCiudad[];
   valoresIniciales: ValoresIniciales;
+  /**
+   * Variante de presentación (BUILD-040 §1.1 vs §1.2):
+   *   - "natural" (default): grid 5 columnas con labels visibles.
+   *   - "compact": 1 fila de 40px, labels con `.sr-only` (siguen en el DOM
+   *     para lectores de pantalla — WCAG 4.1.2), altura reducida, CTA
+   *     "Buscar" abreviado.
+   */
+  variant?: "natural" | "compact";
 }
 
 /**
@@ -34,57 +46,62 @@ interface FiltrosCatalogoFormProps {
  * string y navega con `router.push`, así la página (Server Component) se re-renderiza con los
  * `searchParams` nuevos sin recarga completa del documento. Los `<select>` se pueblan con
  * catálogos dinámicos (`/public/tipos-propiedad`, `/public/ciudades` — ADR-005, GAP-002).
+ *
+ * BUILD-040 §8.1: usa `construirRutaCatalogo()` como fuente única de verdad — la misma
+ * función que consume `FiltrosMobileDrawer`. Zero duplicación de la lógica de URL.
  */
-export function FiltrosCatalogoForm({ tiposPropiedad, ciudades, valoresIniciales }: FiltrosCatalogoFormProps) {
+export function FiltrosCatalogoForm({
+  tiposPropiedad,
+  ciudades,
+  valoresIniciales,
+  variant = "natural",
+}: FiltrosCatalogoFormProps) {
   const router = useRouter();
-  const [tipoOperacion, setTipoOperacion] = useState(valoresIniciales.tipoOperacion ?? "");
-  const [tipoPropiedad, setTipoPropiedad] = useState(valoresIniciales.tipoPropiedad ?? "");
+  const [tipoOperacion, setTipoOperacion] = useState(
+    valoresIniciales.tipoOperacion ?? "",
+  );
+  const [tipoPropiedad, setTipoPropiedad] = useState(
+    valoresIniciales.tipoPropiedad ?? "",
+  );
   const [ciudad, setCiudad] = useState(valoresIniciales.ciudad ?? "");
-  const [precioMin, setPrecioMin] = useState(valoresIniciales.precioMin?.toString() ?? "");
-  const [precioMax, setPrecioMax] = useState(valoresIniciales.precioMax?.toString() ?? "");
+  const [precioMin, setPrecioMin] = useState(
+    valoresIniciales.precioMin?.toString() ?? "",
+  );
+  const [precioMax, setPrecioMax] = useState(
+    valoresIniciales.precioMax?.toString() ?? "",
+  );
 
-  const hayFiltrosActivos = Boolean(tipoOperacion || tipoPropiedad || ciudad || precioMin || precioMax);
+  const snapshot: ValoresFiltrosCatalogo = {
+    tipoOperacion,
+    tipoPropiedad,
+    ciudad,
+    precioMin,
+    precioMax,
+  };
+  const hayFiltrosActivos = hayFiltrosActivosLib(snapshot);
 
-  /**
-   * Navega a la ruta canónica indexable `/propiedades/{operacion}/{ciudad}` (ADR-010, ADR-018
-   * Decisión 1) cuando el visitante completó operación **y** ciudad — los dos ejes que el
-   * cliente pidió rankear (GAP-005). El resto de filtros (RN-024) se preservan como query params
-   * sobre esa ruta. Si falta alguno de los dos, la búsqueda se queda en `/` con query params
-   * (comportamiento acumulativo actual) — no existe página canónica para una búsqueda parcial.
-   */
   function manejarEnvio(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-
-    if (esOperacionValida(tipoOperacion) && ciudad) {
-      const paramsRestantes = new URLSearchParams();
-      if (tipoPropiedad) paramsRestantes.set("tipo_propiedad", tipoPropiedad);
-      if (precioMin) paramsRestantes.set("precio_min", precioMin);
-      if (precioMax) paramsRestantes.set("precio_max", precioMax);
-      const query = paramsRestantes.toString();
-      const rutaCanonica = construirHrefCatalogoSegmento(tipoOperacion, ciudad);
-      router.push(query ? `${rutaCanonica}?${query}` : rutaCanonica);
-      return;
-    }
-
-    const params = new URLSearchParams();
-    if (tipoOperacion) params.set("tipo_operacion", tipoOperacion);
-    if (tipoPropiedad) params.set("tipo_propiedad", tipoPropiedad);
-    if (ciudad) params.set("ciudad", ciudad);
-    if (precioMin) params.set("precio_min", precioMin);
-    if (precioMax) params.set("precio_max", precioMax);
-    const query = params.toString();
-    router.push(query ? `/?${query}` : "/");
+    router.push(construirRutaCatalogo(snapshot));
   }
+
+  const claseLabel = variant === "compact" ? "sr-only" : undefined;
+  const claseFormExtra =
+    variant === "compact" ? " filtros-catalogo--compacta" : "";
+  const ctaTexto = variant === "compact" ? "Buscar" : "Buscar propiedades";
 
   return (
     <form
-      className="filtros-catalogo"
+      className={`filtros-catalogo${claseFormExtra}`}
       onSubmit={manejarEnvio}
       role="search"
       aria-label="Filtros de búsqueda de propiedades"
+      data-variant={variant}
     >
       <div className="filtros-catalogo__campo">
-        <label htmlFor="filtro-operacion">Operación</label>
+        <label htmlFor="filtro-operacion" className={claseLabel}>
+          Operación
+        </label>
         <select
           id="filtro-operacion"
           value={tipoOperacion}
@@ -97,7 +114,9 @@ export function FiltrosCatalogoForm({ tiposPropiedad, ciudades, valoresIniciales
       </div>
 
       <div className="filtros-catalogo__campo">
-        <label htmlFor="filtro-tipo-propiedad">Tipo de inmueble</label>
+        <label htmlFor="filtro-tipo-propiedad" className={claseLabel}>
+          Tipo de inmueble
+        </label>
         <select
           id="filtro-tipo-propiedad"
           value={tipoPropiedad}
@@ -113,8 +132,14 @@ export function FiltrosCatalogoForm({ tiposPropiedad, ciudades, valoresIniciales
       </div>
 
       <div className="filtros-catalogo__campo">
-        <label htmlFor="filtro-ciudad">Ciudad</label>
-        <select id="filtro-ciudad" value={ciudad} onChange={(evento) => setCiudad(evento.target.value)}>
+        <label htmlFor="filtro-ciudad" className={claseLabel}>
+          Ciudad
+        </label>
+        <select
+          id="filtro-ciudad"
+          value={ciudad}
+          onChange={(evento) => setCiudad(evento.target.value)}
+        >
           <option value="">Todas</option>
           {ciudades.map((opcion) => (
             <option key={opcion.ciudad} value={opcion.ciudad}>
@@ -125,37 +150,67 @@ export function FiltrosCatalogoForm({ tiposPropiedad, ciudades, valoresIniciales
       </div>
 
       <div className="filtros-catalogo__campo">
-        <label htmlFor="filtro-precio-min">Precio mínimo (COP)</label>
+        <label htmlFor="filtro-precio-min" className={claseLabel}>
+          Precio mínimo (COP)
+        </label>
         <input
           id="filtro-precio-min"
           type="number"
           inputMode="numeric"
           min={0}
           step={10000}
+          placeholder="$"
           value={precioMin}
           onChange={(evento) => setPrecioMin(evento.target.value)}
         />
       </div>
 
       <div className="filtros-catalogo__campo">
-        <label htmlFor="filtro-precio-max">Precio máximo (COP)</label>
+        <label htmlFor="filtro-precio-max" className={claseLabel}>
+          Precio máximo (COP)
+        </label>
         <input
           id="filtro-precio-max"
           type="number"
           inputMode="numeric"
           min={0}
           step={10000}
+          placeholder="$"
           value={precioMax}
           onChange={(evento) => setPrecioMax(evento.target.value)}
         />
       </div>
 
       <div className="filtros-catalogo__acciones">
-        <button type="submit">Buscar</button>
+        <button type="submit">{ctaTexto}</button>
         {hayFiltrosActivos ? (
-          <a href="/" className="filtros-catalogo__limpiar">
-            Limpiar filtros
-          </a>
+          variant === "compact" ? (
+            <a
+              href="/"
+              className="filtros-catalogo__limpiar-icon"
+              aria-label="Limpiar filtros"
+              title="Limpiar filtros"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                width={16}
+                height={16}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="18" y1="6" x2="6" y2="18" />
+              </svg>
+            </a>
+          ) : (
+            <a href="/" className="filtros-catalogo__limpiar">
+              Limpiar filtros
+            </a>
+          )
         ) : null}
       </div>
     </form>

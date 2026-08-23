@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Degradados Metálicos Bronce/Cobre -->
+    <linearGradient id="bronceLuz" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E5AA70" />
+      <stop offset="50%" stop-color="#C8824B" />
+      <stop offset="100%" stop-color="#9E5A2A" />
+    </linearGradient>
+
+    <linearGradient id="bronceOscuro" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8A481F" />
+      <stop offset="50%" stop-color="#5C2D10" />
+      <stop offset="100%" stop-color="#3A1A07" />
+    </linearGradient>
+
+    <linearGradient id="degradadoAro" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4905C" />
+      <stop offset="30%" stop-color="#8A481F" />
+      <stop offset="70%" stop-color="#A86333" />
+      <stop offset="100%" stop-color="#4F240A" />
+    </linearGradient>
+
+    <!-- Sombra suave para profundidad -->
+    <filter id="sombraSuave" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <g id="rosa-vientos" filter="url(#sombraSuave)" transform="translate(250, 250)">
+    <!-- Aro Exterior -->
+    <circle cx="0" cy="0" r="210" fill="none" stroke="url(#degradadoAro)" stroke-width="20" />
+    
+    <!-- Aro Interior -->
+    <circle cx="0" cy="0" r="160" fill="none" stroke="url(#degradadoAro)" stroke-width="12" />
+
+    <!-- Líneas de borde de los aros -->
+    <circle cx="0" cy="0" r="220" fill="none" stroke="#3A1A07" stroke-width="2" opacity="0.6"/>
+    <circle cx="0" cy="0" r="200" fill="none" stroke="#3A1A07" stroke-width="2" opacity="0.6"/>
+    <circle cx="0" cy="0" r="166" fill="none" stroke="#3A1A07" stroke-width="2" opacity="0.6"/>
+    <circle cx="0" cy="0" r="154" fill="none" stroke="#3A1A07" stroke-width="2" opacity="0.6"/>
+
+    <!-- ================= PUNTOS DIAGONALES PEQUEÑOS (NW, NE, SE, SW) ================= -->
+    <!-- NE Point -->
+    <g transform="rotate(45)">
+      <polygon points="0,0 0,-140 28,-28" fill="url(#bronceOscuro)" />
+      <polygon points="0,0 0,-140 -28,-28" fill="url(#bronceLuz)" />
+    </g>
+
+    <!-- SE Point -->
+    <g transform="rotate(135)">
+      <polygon points="0,0 0,-140 28,-28" fill="url(#bronceOscuro)" />
+      <polygon points="0,0 0,-140 -28,-28" fill="url(#bronceLuz)" />
+    </g>
+
+    <!-- SW Point -->
+    <g transform="rotate(225)">
+      <polygon points="0,0 0,-140 28,-28" fill="url(#bronceOscuro)" />
+      <polygon points="0,0 0,-140 -28,-28" fill="url(#bronceLuz)" />
+    </g>
+
+    <!-- NW Point -->
+    <g transform="rotate(315)">
+      <polygon points="0,0 0,-140 28,-28" fill="url(#bronceOscuro)" />
+      <polygon points="0,0 0,-140 -28,-28" fill="url(#bronceLuz)" />
+    </g>
+
+    <!-- ================= PUNTOS CARDINALES GRANDES (N, E, S, W) ================= -->
+    <!-- PUNTO NORTE -->
+    <polygon points="0,0 0,-240 -40,-40" fill="url(#bronceLuz)" />
+    <polygon points="0,0 0,-240 40,-40" fill="url(#bronceOscuro)" />
+
+    <!-- PUNTO ESTE -->
+    <polygon points="0,0 240,0 40,-40" fill="url(#bronceLuz)" />
+    <polygon points="0,0 240,0 40,40" fill="url(#bronceOscuro)" />
+
+    <!-- PUNTO SUR -->
+    <polygon points="0,0 0,240 40,40" fill="url(#bronceLuz)" />
+    <polygon points="0,0 0,240 -40,40" fill="url(#bronceOscuro)" />
+
+    <!-- PUNTO OESTE -->
+    <polygon points="0,0 -240,0 -40,40" fill="url(#bronceLuz)" />
+    <polygon points="0,0 -240,0 -40,-40" fill="url(#bronceOscuro)" />
+
+    <!-- Detalle del pin central -->
+    <circle cx="0" cy="0" r="6" fill="url(#bronceLuz)" />
+  </g>
+</svg>

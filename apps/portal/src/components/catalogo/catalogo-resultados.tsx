@@ -28,7 +28,12 @@ export function CatalogoResultados({ resultadoBusqueda, buildHrefPagina }: Catal
 
   return (
     <>
-      <p className="catalogo__contador" role="status">
+      <p
+        className="catalogo__contador"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {meta.total === 1 ? "1 propiedad encontrada" : `${meta.total} propiedades encontradas`}
       </p>
 
@@ -40,10 +45,10 @@ export function CatalogoResultados({ resultadoBusqueda, buildHrefPagina }: Catal
         </ul>
       ) : (
         <div className="catalogo__sin-resultados" role="status">
-          <p>No encontramos propiedades con esos filtros. Intentá con otros criterios.</p>
+          <p>No encontramos propiedades con esos filtros. Intenta con otros criterios.</p>
           <p>
-            ¿Buscás algo específico?{" "}
-            <a href="/">Consultá directamente con un agente para atención personalizada.</a>
+            ¿Buscas algo específico?{" "}
+            <a href="/">Consulta directamente con un agente para atención personalizada.</a>
           </p>
         </div>
       )}
