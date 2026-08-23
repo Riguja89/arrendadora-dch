@@ -1,32 +1,167 @@
-import type { RespuestaError } from "@arrendadora/shared";
+import type { CodigoError, RespuestaError } from "@arrendadora/shared";
 
 /**
  * Cliente HTTP base hacia la API administrativa — contrato
  * `docs/architecture/contracts/2026-07-03-001-DESIGN-028-openapi-admin-api.yaml`
  * (base path `/v1`: `/auth/login`, `/admin/propiedades`, `/admin/usuarios`, etc.)
  *
- * Esqueleto de scaffolding — SIN llamadas `fetch` reales ni manejo de sesión todavía. Se
- * implementa junto con `auth-usuarios` (bounded context de `apps/api`) en la siguiente
- * iteración de Construir.
+ * La sesión es una cookie opaca `sid` (`httpOnly`, `Secure`, `SameSite=Lax` — ADR-004): el SPA
+ * nunca la lee ni la envía manualmente, así que **toda** petición va con `credentials: "include"`
+ * para que el navegador la adjunte/reciba.
  */
 
 export const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:3000/v1";
 
+export type MetodoHttp = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
 export interface OpcionesPeticion {
+  method?: MetodoHttp;
+  /**
+   * `FormData` se envía tal cual (multipart, ej. carga de fotos — DESIGN-028
+   * `POST /admin/propiedades/{id}/fotos`); cualquier otro valor se serializa como JSON. En ambos
+   * casos el `Content-Type` correcto lo decide el propio `fetch` (el boundary de multipart no se
+   * puede fijar a mano) — ver `esFormData` abajo.
+   */
+  body?: unknown;
   signal?: AbortSignal;
 }
 
-export type RespuestaApi<T> = { ok: true; data: T } | { ok: false; error: RespuestaError };
+/**
+ * `aborted: true` marca un resultado producido por una petición cancelada (`AbortController`,
+ * típicamente por un cleanup de `useEffect` o React 18 StrictMode — ver `esErrorDeAbort` abajo).
+ * Es aditivo: no rompe a los consumidores existentes que solo miran `ok`, pero permite que un
+ * llamador que sí quiere distinguir cancelación de un error de red real lo verifique antes de
+ * mostrar `error.message` al usuario. Una cancelación NUNCA debe surfacear como error de UI.
+ */
+export type RespuestaApi<T> = { ok: true; data: T } | { ok: false; error: RespuestaError; aborted?: true };
 
 /**
- * Placeholder de bajo nivel. Lanza a propósito — ningún consumidor debe depender de un
- * resultado real todavía.
+ * Endpoints públicos del contrato (`security: []`, DESIGN-028) — un 401 en estos paths es parte
+ * del flujo normal (ej. credenciales inválidas en `/auth/login`), no una sesión vencida. NO debe
+ * disparar el handler global de "sesión expirada" (ver `onUnauthorized`).
  */
-export async function peticionApi<T>(
-  path: string,
-  _opciones: OpcionesPeticion = {},
-): Promise<RespuestaApi<T>> {
-  throw new Error(
-    `peticionApi("${path}") no implementado — scaffolding sin lógica de negocio (auth-usuarios pendiente).`,
+const RUTAS_PUBLICAS = ["/auth/login", "/auth/forgot-password", "/auth/reset-password"];
+
+function esRutaPublica(path: string): boolean {
+  return RUTAS_PUBLICAS.some((ruta) => path === ruta || path.startsWith(`${ruta}?`));
+}
+
+const handlersNoAutenticado = new Set<() => void>();
+
+/**
+ * Se suscribe a la señal "sesión inválida o expirada" — un 401 en una ruta protegida (ej. el
+ * `sid` venció por el TTL deslizante de 30 min, ADR-004, o la cuenta fue desactivada/bloqueada
+ * en otra pestaña). Devuelve la función de desuscripción.
+ */
+export function onUnauthorized(handler: () => void): () => void {
+  handlersNoAutenticado.add(handler);
+  return () => handlersNoAutenticado.delete(handler);
+}
+
+function notificarNoAutenticado(): void {
+  for (const handler of handlersNoAutenticado) handler();
+}
+
+function generarCorrelationIdCliente(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `client-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function errorDeRed(): RespuestaError {
+  return {
+    error: "SERVICE_UNAVAILABLE",
+    message: "No se pudo conectar con el servidor. Verificá tu conexión e intentá de nuevo.",
+    correlation_id: generarCorrelationIdCliente(),
+  };
+}
+
+function errorAbortado(): RespuestaError {
+  return {
+    error: "SERVICE_UNAVAILABLE",
+    message: "Solicitud cancelada.",
+    correlation_id: generarCorrelationIdCliente(),
+  };
+}
+
+/**
+ * Distingue una cancelación (`AbortController.abort()`) de un error de red real. Cubre las dos
+ * formas en que puede observarse: el `fetch` rechaza con un `AbortError` (nombre estándar del
+ * error, ya sea `DOMException` en browsers/Node modernos u otro objeto con `name: "AbortError"`
+ * en runtimes/tests que no usan `DOMException`), o la señal ya quedó marcada `aborted` cuando el
+ * rechazo llegó (algunos entornos de test simulan el rechazo sin tipar el error).
+ */
+function esErrorDeAbort(err: unknown, signal: AbortSignal | undefined): boolean {
+  if (signal?.aborted) return true;
+  if (typeof DOMException !== "undefined" && err instanceof DOMException && err.name === "AbortError") return true;
+  return typeof err === "object" && err !== null && (err as { name?: unknown }).name === "AbortError";
+}
+
+function errorGenerico(): RespuestaError {
+  return {
+    error: "INTERNAL_ERROR" as CodigoError,
+    message: "Ocurrió un error inesperado. Intentá de nuevo.",
+    correlation_id: generarCorrelationIdCliente(),
+  };
+}
+
+function esRespuestaError(payload: unknown): payload is RespuestaError {
+  return (
+    typeof payload === "object" &&
+    payload !== null &&
+    typeof (payload as Partial<RespuestaError>).error === "string" &&
+    typeof (payload as Partial<RespuestaError>).message === "string" &&
+    typeof (payload as Partial<RespuestaError>).correlation_id === "string"
   );
+}
+
+/**
+ * Ejecuta una petición contra la API administrativa. Nunca lanza — todo resultado (éxito, error
+ * de negocio o error de red) se representa con `RespuestaApi<T>`.
+ */
+export async function peticionApi<T>(path: string, opciones: OpcionesPeticion = {}): Promise<RespuestaApi<T>> {
+  const { method = "GET", body, signal } = opciones;
+
+  // `FormData` (carga de fotos, multipart) nunca se serializa ni lleva Content-Type manual: el
+  // browser debe fijar `multipart/form-data; boundary=...` por su cuenta — un header explícito
+  // rompe el parseo del backend.
+  const esFormData = typeof FormData !== "undefined" && body instanceof FormData;
+
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      credentials: "include",
+      headers: body !== undefined && !esFormData ? { "Content-Type": "application/json" } : undefined,
+      body: body === undefined ? undefined : esFormData ? (body as FormData) : JSON.stringify(body),
+      signal,
+    });
+  } catch (err) {
+    if (esErrorDeAbort(err, signal)) {
+      return { ok: false, error: errorAbortado(), aborted: true };
+    }
+    return { ok: false, error: errorDeRed() };
+  }
+
+  if (respuesta.status === 204) {
+    return { ok: true, data: undefined as T };
+  }
+
+  let payload: unknown = null;
+  try {
+    payload = await respuesta.json();
+  } catch {
+    payload = null;
+  }
+
+  if (respuesta.ok) {
+    return { ok: true, data: payload as T };
+  }
+
+  if (respuesta.status === 401 && !esRutaPublica(path)) {
+    notificarNoAutenticado();
+  }
+
+  return { ok: false, error: esRespuestaError(payload) ? payload : errorGenerico() };
 }

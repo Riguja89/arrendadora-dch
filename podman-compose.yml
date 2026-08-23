@@ -1,0 +1,64 @@
+# Infraestructura LOCAL de desarrollo/pruebas — Arrendadora (Podman / podman-compose).
+# NO es producción. Secretos = valores dev triviales. Puertos publicados solo en localhost.
+#
+# Uso:
+#   podman compose -f podman-compose.yml up -d
+#   podman compose -f podman-compose.yml down          # conserva volúmenes
+#   podman compose -f podman-compose.yml down -v       # borra datos
+#
+# Servicios:
+#   postgres   → BD de la API (extensiones citext / pg_trgm se crean vía migración Prisma)
+#   localstack → emulador AWS S3 (para el futuro adaptador S3 de admin-multimedia, ADR-008)
+
+services:
+  postgres:
+    image: docker.io/library/postgres:16
+    container_name: arrendadora-postgres
+    environment:
+      POSTGRES_USER: arrendadora
+      POSTGRES_PASSWORD: arrendadora
+      POSTGRES_DB: arrendadora_dev
+    ports:
+      # Bind solo a loopback — no exponer a la LAN (infra de dev).
+      # Host 5434 (no 5432, no 5433) para NO chocar con los PostgreSQL nativos de Windows
+      # que ya escuchan en 0.0.0.0:5432 y 127.0.0.1:5433 en esta máquina. Dentro del
+      # contenedor sigue en 5432.
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - arrendadora_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arrendadora -d arrendadora_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  localstack:
+    # Pineado a 3.0 (community, sin token/licencia Pro). "latest" pasó a exigir
+    # activación de licencia Pro y el contenedor crashea al iniciar.
+    image: docker.io/localstack/localstack:3.0
+    container_name: arrendadora-localstack
+    environment:
+      SERVICES: s3
+      DEBUG: "0"
+      # PERSISTENCE es feature Pro (requiere licencia) — deshabilitada para community.
+      # No se necesita persistencia entre reinicios en dev.
+      # PERSISTENCE: "1"
+    ports:
+      # Expuesto a la LAN (0.0.0.0, no solo loopback) para pruebas desde dispositivos móviles en
+      # la misma red (las fotos de propiedades se sirven desde acá; "localhost" desde el celular
+      # es el celular, no esta PC). Infra dev, sin datos reales — revertir a "127.0.0.1:4566:4566"
+      # si ya no se necesita probar desde otro dispositivo.
+      - "0.0.0.0:4566:4566"
+    volumes:
+      - arrendadora_localstack:/var/lib/localstack
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  arrendadora_pgdata:
+  arrendadora_localstack:

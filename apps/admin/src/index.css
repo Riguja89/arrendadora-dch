@@ -38,3 +38,475 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
+
+.login-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.campo label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.campo input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  color: var(--color-text);
+}
+
+.campo input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.login-page__error {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+}
+
+.login-page__exito {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-md);
+  color: var(--color-success);
+  font-size: var(--font-size-sm);
+}
+
+.login-page__form button[type="submit"] {
+  padding: var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-page__form button[type="submit"]:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
+
+.login-page__form button[type="submit"]:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.admin-layout__usuario {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.admin-layout__rol {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.admin-layout__usuario button {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.admin-layout__usuario button:hover {
+  background-color: var(--color-border);
+}
+
+.admin-layout__aviso {
+  padding: var(--space-3);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  color: var(--color-warning);
+}
+
+/* ---- Propiedades: shared helpers ---- */
+
+.texto-muted {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.campo-error {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.campo--checkbox label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 400;
+}
+
+.campo--ancho {
+  grid-column: 1 / -1;
+}
+
+.boton-primario {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.boton-primario:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.badge--estado-disponible {
+  background-color: #dcfce7;
+  color: var(--color-success);
+}
+
+.badge--estado-reservada {
+  background-color: #fef3c7;
+  color: var(--color-warning);
+}
+
+.badge--estado-arrendada_vendida {
+  background-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.badge--archivada {
+  margin-left: var(--space-2);
+  background-color: #fee2e2;
+  color: var(--color-error);
+}
+
+.badge--estado-usuario-activo {
+  background-color: #dcfce7;
+  color: var(--color-success);
+}
+
+.badge--estado-usuario-desactivado {
+  background-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.badge--estado-usuario-bloqueado {
+  background-color: #fee2e2;
+  color: var(--color-error);
+}
+
+/* ---- Listado de propiedades ---- */
+
+.propiedades-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.propiedades-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: end;
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.propiedades-filtros__acciones {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.tabla-propiedades,
+.tabla-historial,
+.tabla-usuarios {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--space-4);
+}
+
+.tabla-propiedades th,
+.tabla-propiedades td,
+.tabla-historial th,
+.tabla-historial td,
+.tabla-usuarios th,
+.tabla-usuarios td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
+.tabla-propiedades__acciones,
+.tabla-usuarios__acciones {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.paginacion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* ---- Listado de usuarios (spec-005) ---- */
+
+.usuarios-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.usuarios-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: end;
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.usuarios-filtros__acciones {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.usuario-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 480px;
+  margin-bottom: var(--space-6);
+}
+
+.usuario-form select {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  color: var(--color-text);
+}
+
+.estado-usuario-control {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.estado-usuario-control--compacto {
+  margin-bottom: 0;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+}
+
+.usuario-nuevo__password {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  font-size: var(--font-size-lg);
+}
+
+/* ---- Formulario de propiedad ---- */
+
+.propiedad-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 900px;
+  margin-bottom: var(--space-6);
+}
+
+.propiedad-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.propiedad-form select,
+.propiedad-form textarea {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  color: var(--color-text);
+}
+
+.propiedad-form__amenidades {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.propiedad-form__amenidad {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+}
+
+.propiedad-form__amenidad-cantidad {
+  width: 4rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Estado y ubicación ---- */
+
+.estado-control {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.estado-control__acciones {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.ubicacion-field {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.ubicacion-field__manual {
+  display: flex;
+  gap: var(--space-4);
+  align-items: end;
+  margin: var(--space-3) 0;
+}
+
+/* ---- Galería de fotos (spec-004) ---- */
+
+.fotos-field {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.fotos-field__subir {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  margin: var(--space-2) 0;
+}
+
+.fotos-field__subir:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.fotos-field__rechazos {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fotos-field__galeria {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-3) 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-4);
+}
+
+.fotos-field__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fotos-field__miniatura-wrap {
+  position: relative;
+}
+
+.fotos-field__miniatura {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.fotos-field__badge-portada {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.fotos-field__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.fotos-field__acciones button {
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
+}

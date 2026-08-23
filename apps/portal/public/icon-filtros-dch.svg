@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" role="img" aria-label="Filtros">
+  <title>Filtros de búsqueda</title>
+  <!--
+    Icono de filtros D-CH Inmobiliaria.
+    Estilo: embudo con sliders integrados (metáfora dual: "embudo que filtra" + "controles que ajustás").
+    Trazo: currentColor (queda tematizable — cobre #A9744F sobre fondo cobre en el FAB usa blanco).
+    Optimizado para viewBox cuadrado 24×24, apto para uso como icono de FAB (56×56 contenedor, icono 24×24 centrado).
+    Coherencia con el logo: trazos precisos, extremos redondeados, geometría equilibrada (misma sensibilidad
+    artesanal de la rosa de los vientos).
+  -->
+  <g stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Contorno del embudo — trapecio invertido con base ancha arriba y tallo abajo -->
+    <path d="M4 5 L20 5 L14 12 L14 20 L10 18 L10 12 Z" />
+
+    <!-- Detalle decorativo: pequeña muesca en la boca superior del embudo,
+         evoca los sliders/controles de ajuste sin recargar el pictograma -->
+    <line x1="8" y1="8" x2="16" y2="8" opacity="0.6" />
+  </g>
+</svg>

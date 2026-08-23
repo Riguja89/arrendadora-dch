@@ -1,4 +1,4 @@
-import type { RespuestaError, RespuestaPaginada } from "@arrendadora/shared";
+import type { RespuestaError } from "@arrendadora/shared";
 
 /**
  * Cliente HTTP base hacia la API pública del portal — contrato
@@ -6,30 +6,119 @@ import type { RespuestaError, RespuestaPaginada } from "@arrendadora/shared";
  * (base path `/v1`: `/public/propiedades`, `/public/destacadas`, `/public/tipos-propiedad`,
  * `/public/ciudades`, `/public/propiedades/{slug}`, `/public/propiedades/{slug}/contacto-whatsapp`).
  *
- * Esqueleto de scaffolding — SIN llamadas `fetch` reales todavía. El objetivo es fijar el tipo
- * de retorno (`RespuestaApi<T>`) para que las páginas SSR y hooks futuros puedan tipar contra
- * él desde ya. Se implementa spec por spec a partir de CU-001 (spec-002).
+ * `peticionApi()` corre tanto en Server Components (SSR/Node) como en el navegador — usa `fetch`
+ * global (disponible nativamente en ambos entornos, sin polyfill). Por default no cachea
+ * (`cache: "no-store"`) para reflejar el inventario real (propiedades cambian de estado con
+ * frecuencia) — el arquitecto puede afinar a ISR/`revalidate` por endpoint más adelante.
+ *
+ * Nota: no se reexporta `RespuestaPaginada` de `@arrendadora/shared` — esa forma (`{ data, meta }`)
+ * corresponde al envelope anidado del admin (ADR-015). El endpoint público `/public/propiedades`
+ * declara un bloque de paginación PLANO (`pagina`, `tamano_pagina`, `total`, `total_paginas` junto
+ * a `data[]`, ver DESIGN-029) — desviación documentada en `apps/api/.../portal-catalogo/CLAUDE.md`.
+ * Los tipos de esa forma plana viven en `src/lib/api/catalogo.ts`, junto al resto del wire del BC.
  */
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/v1";
 
 export interface OpcionesPeticion {
   signal?: AbortSignal;
+  /** Override puntual de estrategia de cache de Next/fetch. Default: `"no-store"`. */
+  cache?: RequestCache;
 }
 
 export type RespuestaApi<T> = { ok: true; data: T } | { ok: false; error: RespuestaError };
 
+function generarCorrelationId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+/** Construye un `RespuestaError` a partir del body de una respuesta no-2xx (envelope ADR-015). */
+async function leerError(response: Response): Promise<RespuestaError> {
+  try {
+    const cuerpo = (await response.json()) as Partial<RespuestaError> | null;
+    if (cuerpo && typeof cuerpo.error === "string" && typeof cuerpo.message === "string") {
+      return {
+        error: cuerpo.error as RespuestaError["error"],
+        message: cuerpo.message,
+        correlation_id: cuerpo.correlation_id ?? generarCorrelationId(),
+        ...(cuerpo.detalles ? { detalles: cuerpo.detalles } : {}),
+      };
+    }
+  } catch {
+    // El body no es JSON válido (o está vacío) — se sintetiza el error genérico de abajo.
+  }
+  return {
+    error: "INTERNAL_ERROR",
+    message: "Ocurrió un error inesperado al consultar el servicio.",
+    correlation_id: generarCorrelationId(),
+  };
+}
+
+/** Normaliza una `Response` de fetch al envelope `RespuestaApi<T>` (ADR-015). No lanza. */
+async function normalizarRespuesta<T>(response: Response): Promise<RespuestaApi<T>> {
+  if (!response.ok) {
+    return { ok: false, error: await leerError(response) };
+  }
+  const data = (await response.json()) as T;
+  return { ok: true, data };
+}
+
+/** Envelope de error sintetizado ante un fallo de red (fetch rechazado). */
+function errorServicioNoDisponible(): RespuestaApi<never> {
+  return {
+    ok: false,
+    error: {
+      error: "SERVICE_UNAVAILABLE",
+      message: "No pudimos conectar con el servicio de propiedades. Intenta de nuevo en unos minutos.",
+      correlation_id: generarCorrelationId(),
+    },
+  };
+}
+
 /**
- * Placeholder de bajo nivel. Lanza a propósito — ningún consumidor debe depender de un
- * resultado real todavía; el error deja explícito que la implementación está pendiente.
+ * Petición GET tipada contra la API pública. Nunca lanza: los errores de red, HTTP y de
+ * parseo se normalizan al envelope `RespuestaError` (ADR-015) dentro de `{ ok: false, error }`.
  */
 export async function peticionApi<T>(
   path: string,
-  _opciones: OpcionesPeticion = {},
+  opciones: OpcionesPeticion = {},
 ): Promise<RespuestaApi<T>> {
-  throw new Error(
-    `peticionApi("${path}") no implementado — scaffolding sin lógica de negocio (CU-001 pendiente, spec-002).`,
-  );
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "GET",
+      signal: opciones.signal,
+      cache: opciones.cache ?? "no-store",
+      headers: { Accept: "application/json" },
+    });
+    return await normalizarRespuesta<T>(response);
+  } catch {
+    return errorServicioNoDisponible();
+  }
 }
 
-export type { RespuestaPaginada };
+/**
+ * Petición POST tipada contra la API pública (ej. `contacto-whatsapp`, DESIGN-029). Mismo
+ * contrato de errores que `peticionApi`: nunca lanza, siempre normaliza a `RespuestaApi<T>`.
+ * No cachea (las acciones de escritura no son cacheables).
+ */
+export async function peticionApiPost<T>(
+  path: string,
+  body: unknown,
+  opciones: OpcionesPeticion = {},
+): Promise<RespuestaApi<T>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "POST",
+      signal: opciones.signal,
+      cache: "no-store",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return await normalizarRespuesta<T>(response);
+  } catch {
+    return errorServicioNoDisponible();
+  }
+}
