@@ -10,7 +10,7 @@ import {
 } from "@/lib/api/catalogo";
 import { parseEnteroPositivo, parsePagina } from "@/lib/format";
 import { esOperacionValida } from "@/lib/rutas";
-import { FiltrosCatalogoForm } from "@/components/catalogo/filtros-catalogo-form";
+import { FiltrosCatalogoSticky } from "@/components/catalogo/filtros-catalogo-sticky";
 import { PropiedadCard } from "@/components/catalogo/propiedad-card";
 import { CatalogoResultados } from "@/components/catalogo/catalogo-resultados";
 
@@ -43,21 +43,21 @@ export async function generateMetadata({ searchParams }: HomePageProps): Promise
     const etiqueta = filtros.tipoOperacion === "arriendo" ? "en arriendo" : "en venta";
     return {
       title: `Propiedades ${etiqueta} en ${filtros.ciudad}`,
-      description: `Explorá propiedades ${etiqueta} en ${filtros.ciudad}, Casanare: apartamentos, casas, locales y más con Arrendadora.`,
+      description: `Explora propiedades ${etiqueta} en ${filtros.ciudad}, Casanare: apartamentos, casas, locales y más con Arrendadora.`,
     };
   }
 
   if (filtros.ciudad) {
     return {
       title: `Propiedades en ${filtros.ciudad}`,
-      description: `Explorá el catálogo completo de propiedades disponibles en ${filtros.ciudad}, Casanare.`,
+      description: `Explora el catálogo completo de propiedades disponibles en ${filtros.ciudad}, Casanare.`,
     };
   }
 
   return {
     title: "Catálogo de propiedades en Yopal y Aguazul",
     description:
-      "Explorá apartamentos, casas, locales y más en arriendo y venta en Yopal y Aguazul, Casanare.",
+      "Explora apartamentos, casas, locales y más en arriendo y venta en Yopal y Aguazul, Casanare.",
   };
 }
 
@@ -88,10 +88,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <main className="container">
       <header className="portal-hero">
-        <h1>Arrendadora — arriendo y venta en Yopal y Aguazul</h1>
-        <p>
-          Explorá nuestro catálogo de propiedades en Casanare. Filtrá por operación, tipo de
-          inmueble, ciudad y precio para encontrar la opción que buscás.
+        <p className="portal-hero__eyebrow">D-CH Inmobiliaria</p>
+        <h1 className="portal-hero__titulo">
+          Hogares exclusivos en <span className="portal-hero__acento">Casanare</span>
+        </h1>
+        <p className="portal-hero__subtitulo">
+          Explora nuestro catálogo de propiedades en arriendo y venta en Yopal y Aguazul.
+          Filtra por operación, tipo de inmueble, ciudad y precio para encontrar la opción que buscas.
         </p>
       </header>
 
@@ -113,9 +116,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       ) : null}
 
       <section className="catalogo" aria-labelledby="catalogo-titulo">
-        <h2 id="catalogo-titulo">Catálogo completo</h2>
+        <div className="catalogo__encabezado">
+          <h2 id="catalogo-titulo">Catálogo completo</h2>
+        </div>
 
-        <FiltrosCatalogoForm
+        <FiltrosCatalogoSticky
           tiposPropiedad={tiposPropiedad}
           ciudades={ciudades}
           valoresIniciales={filtros}

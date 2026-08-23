@@ -1,0 +1,283 @@
+/**
+ * Portal theme — D-CH Inmobiliaria (BUILD-039).
+ *
+ * Extiende `tokens.css` (@arrendadora/design-tokens/css) con:
+ *   1) La paleta cobre/crema/marrón y tipografía Playfair Display + Source Sans 3
+ *      definida en `docs/ui/2026-07-03-001-BUILD-039-portal-design-tokens.md`.
+ *   2) Sobrescritura de los tokens legacy (`--color-primary`, `--space-*`,
+ *      `--font-family-base`, etc.) para que los componentes existentes hereden
+ *      automáticamente la nueva paleta sin cambio a nivel de archivo.
+ *   3) Reglas base sobre `html/body` y `h1..h6` para aplicar la nueva tipografía
+ *      (sin esto el navegador cae a system-ui y los pesos altos no renderizan).
+ *
+ * Importar SIEMPRE después de `@arrendadora/design-tokens/css` para que el
+ * cascade lo pise. Alcance: solo portal (no admin).
+ *
+ * Contratos WCAG AA verificados en §5.1 del spec del componente de filtros.
+ */
+
+:root {
+  /* ─────────────────────────────────────────────────────────────
+     COLOR — PRIMARY (COBRE / BRONCE MARCA)
+     ───────────────────────────────────────────────────────────── */
+  --color-primary-50: #fdf6ee;
+  --color-primary-100: #f5e4d2;
+  --color-primary-200: #edcba6;
+  --color-primary-300: #e5aa70;
+  --color-primary-400: #d4905c;
+  --color-primary-500: #c8824b;
+  --color-primary-600: #a9744f;
+  --color-primary-700: #8a481f;
+  --color-primary-800: #5c2d10;
+  --color-primary-900: #3a1a07;
+
+  /* ─────────────────────────────────────────────────────────────
+     COLOR — NEUTRAL (CREMA / MARRÓN CÁLIDO)
+     ───────────────────────────────────────────────────────────── */
+  --color-neutral-50: #faf6ec;
+  --color-neutral-100: #f7f3e7;
+  --color-neutral-200: #efeae0;
+  --color-neutral-300: #d9d2c4;
+  --color-neutral-400: #b5ac9b;
+  --color-neutral-500: #8a857d;
+  --color-neutral-600: #6d675e;
+  --color-neutral-700: #4e4941;
+  --color-neutral-800: #2e2a24;
+  --color-neutral-900: #1c1913;
+
+  /* ─────────────────────────────────────────────────────────────
+     COLOR — SEMÁNTICOS
+     ───────────────────────────────────────────────────────────── */
+  --color-success-50: #eff4ec;
+  --color-success-100: #dde9d8;
+  --color-success-500: #7a9f72;
+  --color-success-700: #4f6e48;
+
+  --color-warning-100: #fbeed2;
+  --color-warning-500: #c99a3b;
+  --color-warning-700: #8e6820;
+
+  --color-error-100: #f7dcd5;
+  --color-error-500: #c34e36;
+  --color-error-700: #8e3320;
+
+  --color-info-100: #dce7ee;
+  --color-info-500: #4a7c99;
+
+  /* ─────────────────────────────────────────────────────────────
+     COLOR — TEXT ROLES
+     ───────────────────────────────────────────────────────────── */
+  --color-text-primary: #3a1a07;
+  --color-text-secondary: #4e4941;
+  --color-text-tertiary: #6d675e;
+  --color-text-price: #8a481f;
+  --color-text-brand: #a9744f;
+  --color-text-inverse: #ffffff;
+  --color-text-disabled: #b5ac9b;
+
+  /* ─────────────────────────────────────────────────────────────
+     COLOR — SURFACES (jerarquía 4 niveles + overlay)
+     ───────────────────────────────────────────────────────────── */
+  --color-surface-page: #faf6ec;
+  --color-surface-card: #ffffff;
+  --color-surface-elevated: #f7f3e7;
+  --color-surface-sticky: rgba(255, 255, 255, 0.93);
+  --color-surface-dark: #3a1a07;
+  --color-surface-overlay: rgba(58, 26, 7, 0.5);
+
+  /* ─────────────────────────────────────────────────────────────
+     COLOR — BORDERS
+     ───────────────────────────────────────────────────────────── */
+  --color-border-subtle: #efeae0;
+  --color-border-default: #d9d2c4;
+  --color-border-strong: #b5ac9b;
+  --color-border-focus: #a9744f;
+  --color-border-brand: #c8824b;
+
+  /* ─────────────────────────────────────────────────────────────
+     TIPOGRAFÍA — FAMILIAS
+     ───────────────────────────────────────────────────────────── */
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body:
+    "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+
+  /* ─────────────────────────────────────────────────────────────
+     TIPOGRAFÍA — TAMAÑOS (ratio 1.25, superset del legacy)
+     ───────────────────────────────────────────────────────────── */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+
+  /* ─────────────────────────────────────────────────────────────
+     TIPOGRAFÍA — PESOS
+     ───────────────────────────────────────────────────────────── */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ─────────────────────────────────────────────────────────────
+     ESPACIADO — BASE 4PX (spacing-N = superset de los space-N legacy)
+     ───────────────────────────────────────────────────────────── */
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+
+  /* ─────────────────────────────────────────────────────────────
+     ESPACIADO — COMPONENTE FILTROS
+     ───────────────────────────────────────────────────────────── */
+  --filter-bar-height-normal: 120px;
+  --filter-bar-height-compact: 56px;
+  --filter-bar-padding-x: var(--spacing-6);
+  --filter-field-gap: var(--spacing-3);
+  --fab-size: 56px;
+  --fab-offset-bottom: 24px;
+  --fab-offset-right: 16px;
+  --touch-target-min: 44px;
+
+  /* ─────────────────────────────────────────────────────────────
+     RADIOS (superset del legacy — sm/md/lg conservan compat)
+     ───────────────────────────────────────────────────────────── */
+  --radius-none: 0;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+
+  /* ─────────────────────────────────────────────────────────────
+     SOMBRAS (con tinte marrón cálido, no negro digital)
+     ───────────────────────────────────────────────────────────── */
+  --shadow-none: none;
+  --shadow-lg:
+    0 10px 15px rgba(58, 26, 7, 0.08), 0 4px 6px rgba(58, 26, 7, 0.04);
+  --shadow-xl:
+    0 20px 25px rgba(58, 26, 7, 0.1), 0 8px 10px rgba(58, 26, 7, 0.04);
+  --shadow-2xl: 0 25px 50px rgba(58, 26, 7, 0.18);
+  --shadow-sticky: 0 2px 8px rgba(58, 26, 7, 0.1);
+  --shadow-fab: 0 4px 12px rgba(58, 26, 7, 0.25);
+  --shadow-inset-focus: inset 0 0 0 2px #a9744f;
+
+  /* ─────────────────────────────────────────────────────────────
+     MOTION
+     ───────────────────────────────────────────────────────────── */
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-medium: 250ms;
+  --duration-slow: 300ms;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* ─────────────────────────────────────────────────────────────
+     Z-INDEX
+     ───────────────────────────────────────────────────────────── */
+  --z-base: 0;
+  --z-dropdown: 50;
+  --z-sticky-bar: 100;
+  --z-fab: 200;
+  --z-overlay: 300;
+  --z-bottom-sheet: 310;
+  --z-toast: 500;
+  --z-modal: 600;
+
+  /* ─────────────────────────────────────────────────────────────
+     OVERRIDES DE TOKENS LEGACY
+     Sobrescribe los valores de `tokens.css` sin cambiar los nombres,
+     para que los componentes existentes (`propiedad-card`,
+     `ficha-propiedad`, `mapa-ubicacion`, `contacto-whatsapp`) hereden
+     la nueva paleta cobre/crema con cero cambios de archivo.
+     ───────────────────────────────────────────────────────────── */
+  --color-primary: #a9744f;
+  --color-primary-hover: #8a481f;
+  --color-primary-contrast: #ffffff;
+
+  --color-success: #4f6e48;
+  --color-error: #c34e36;
+  --color-warning: #c99a3b;
+
+  --color-text: #3a1a07;
+  --color-text-muted: #6d675e;
+  --color-background: #faf6ec;
+  --color-surface: #f7f3e7;
+  --color-border: #efeae0;
+
+  --font-family-base:
+    "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  /* Aumentamos ligeramente radios legacy para el tono más residencial */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --shadow-sm: 0 1px 2px rgba(58, 26, 7, 0.06);
+  --shadow-md:
+    0 4px 6px rgba(58, 26, 7, 0.08), 0 2px 4px rgba(58, 26, 7, 0.04);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   BASE — TIPOGRAFÍA Y FONDO (aplicación obligatoria de las
+   familias declaradas — sin esto los pesos altos no renderizan).
+   ───────────────────────────────────────────────────────────── */
+html {
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-page);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   REDUCED MOTION — respetar preferencia del usuario.
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
