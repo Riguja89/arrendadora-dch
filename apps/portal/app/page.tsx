@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import {
   buscarPropiedades,
   construirQueryCatalogo,
@@ -89,22 +88,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <main className="container">
       <header className="portal-hero">
-        <div className="portal-hero__marca">
-          {/* Logo decorativo: la marca queda expresada textualmente en el <p> siguiente
-              (`portal-hero__nombre`), por lo que `alt=""` evita duplicar el anuncio
-              del nombre en lectores de pantalla (W3C WCAG H67 — imagen adyacente al
-              texto que sirve como accessible name). */}
-          <Image
-            src="/logo-simple-dch.svg"
-            alt=""
-            width={96}
-            height={96}
-            priority
-            className="portal-hero__logo"
-          />
-          <p className="portal-hero__nombre">D-CH Inmobiliaria</p>
-          <p className="portal-hero__descriptor">Servicios inmobiliarios</p>
-        </div>
+        {/* La marca (logo + nombre) vive ahora en el header global compartido
+            (`HeaderPortal`, RN-L07). El hero del catálogo conserva un eyebrow
+            textual para mantener la jerarquía sin duplicar el logo. */}
+        <p className="portal-hero__eyebrow">D-CH Inmobiliaria</p>
         <h1 className="portal-hero__titulo">
           Hogares exclusivos en <span className="portal-hero__acento">Casanare</span>
         </h1>

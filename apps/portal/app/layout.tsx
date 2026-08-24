@@ -4,6 +4,8 @@ import { Playfair_Display, Source_Sans_3 } from "next/font/google";
 import "@arrendadora/design-tokens/css";
 import "@arrendadora/design-tokens/portal-theme";
 import "./globals.css";
+import { HeaderPortal } from "@/components/layout/header-portal";
+import { FooterPortal } from "@/components/layout/footer-portal";
 
 /**
  * Tipografía oficial del portal (BUILD-039). `next/font/google` autohospeda las
@@ -42,7 +44,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       lang="es"
       className={`${playfair.variable} ${sourceSans.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <HeaderPortal />
+        {children}
+        <FooterPortal />
+      </body>
     </html>
   );
 }
